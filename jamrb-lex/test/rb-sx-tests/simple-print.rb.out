@@ -1,0 +1,6 @@
+((Token ((1 0) on_ident "print"))
+ (Token ((1 5) on_sp " "))
+ (Token ((1 6) on_tstring_beg "\\\""))
+ (Token ((1 7) on_tstring_content "Hello World!"))
+ (Token ((1 19) on_tstring_end "\\\""))
+ (Token ((1 20) on_nl "\\n")))
