@@ -1,11 +1,12 @@
-;; jamr-lex.Racket
+;; jamr-lex.rkt
 ;;
 ;; "Good news, everyone!"
 ;;
 ;; By Jonathon McDonald
 #lang racket
 (require parser-tools/lex
-         "jamrb-spec.rkt"
+         "misc.rkt"
+         "numbers.rkt"
          "token.rkt")
 
 (define input (void))
