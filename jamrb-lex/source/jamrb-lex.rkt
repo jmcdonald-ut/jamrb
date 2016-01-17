@@ -29,14 +29,14 @@
   ; Define our lexer.
   (define lex
     (lexer
-     [comment (tokenize-and-continue line col 'comment lexeme)]
-     [newline (tokenize-and-continue line col 'nl lexeme)]
-     [space (tokenize-and-continue line col 'sp lexeme)]
-     [number-literal (tokenize-and-continue line col 'int lexeme)]
+     [comment (tok-con line col 'comment lexeme)]
+     [newline (tok-con line col 'nl lexeme)]
+     [space (tok-con line col 'sp lexeme)]
+     [number-literal (tok-con line col 'int lexeme)]
      [(eof) '()]))
   
-  ; Tokenizes the value and continues
-  (define (tokenize-and-continue line col key lexeme)
+  ; Tokenizes the value and continues lexical analysis.
+  (define (tok-con line col key lexeme)
     (cons (tokenize line col key lexeme) (jamrb-lex port)))
 
   ; Return the result of lexically analyzing the given port.

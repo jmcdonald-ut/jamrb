@@ -1,4 +1,4 @@
-require 'fileutils'
+require 'output_spec_helper'
 
 JamRb = {
   spec: File.dirname(__FILE__),
@@ -16,4 +16,7 @@ RSpec.configure do |config|
     # Prevent mocking or stubbing method that does not exist.
     mocks.verify_partial_doubles = true
   end
+
+  config.extend OutputSpecHelper::Extends, :output_specs
+  config.include OutputSpecHelper::Includes, :output_specs
 end

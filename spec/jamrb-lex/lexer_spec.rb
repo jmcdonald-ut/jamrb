@@ -1,37 +1,23 @@
-RSpec.describe 'jamrb-lex' do
-  # Before the specs are run re-make the lexer binary.
-  before :all do
-    FileUtils.cd JamRb[:root]
-    FileUtils.cd JamRb[:root] + "/jamrb-lex"
+RSpec.describe 'jamrb-lex', :output_specs do
+  project_path = JamRb[:root] + "/jamrb-lex"
+  fixtures_path = JamRb[:root] + "/jamrb-lex/test/rb-sx-tests"
 
-    system "make clean > /dev/null"
-    fail IOError, "`$ make clean` failed!" if $? != 0
+  before(:all) { make_executable_in project_path }
 
-    system "make > /dev/null"
-    fail IOError, "`$ make` failed!" if $? != 0
-  end
+  fetch_fixtures(fixtures_path).each do |fixture|
+    input = File.basename fixture
+    output = "#{input}.out"
 
-  # Ensure that we are in the lexer directory.
-  before(:each) { FileUtils.cd JamRb[:root] + "/jamrb-lex" }
+    navigate_to project_path
+    result, status = execute "./bin/jamrb_lex < #{fixture}"
 
-  context 'input file' do
-    path = JamRb[:root] + "/jamrb-lex/test/rb-sx-tests"
-    entries = Dir.entries path
+    describe 'lexer' do
+      it 'exits with zero status' do
+        expect(status).to eq 0
+      end
 
-    valid_files = entries.keep_if { |f| File.file? path + "/#{f}" }
-    file_paths = valid_files.map { |f| path + "/#{f}" }
-    in_files = file_paths.keep_if { |f| f.match(/.*\.out/).nil? }
-
-    in_files.each do |in_file|
-      next unless File.exists? in_file + ".out"
-
-      in_name = File.basename(in_file)
-      out_name = "#{in_name}.out"
-
-      it "tokenizes contents of #{in_name} to match contents of #{out_name}" do
-        expected = File.read(in_file + ".out")
-        result = `./bin/jamrb_lex < #{in_file}`
-        expect(result).to eq expected
+      it "tokenizes #{input} to match the contents of #{output}" do
+        expect(result).to eq File.read "#{fixture}.out"
       end
     end
   end
