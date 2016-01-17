@@ -7,12 +7,13 @@
 (require parser-tools/lex
          "misc.rkt"
          "numbers.rkt"
+         "operations.rkt"
          "token.rkt")
 
 (define input (void))
 (define test-input "foo = true")
 
-;; `jamrb-lex` performs lexical anlaysis on some sort of input stream.  Upon finishing this will 
+;; `jamrb-lex` performs lexical anlaysis on an input stream.  Upon finishing this will 
 ;; return either a list of tokens, or an error will be emitted.
 (provide jamrb-lex)
 (define (jamrb-lex port)
@@ -32,7 +33,9 @@
      [comment (tok-con line col 'comment lexeme)]
      [newline (tok-con line col 'nl lexeme)]
      [space (tok-con line col 'sp lexeme)]
-     [number-literal (tok-con line col 'int lexeme)]
+     [int-literal (tok-con line col 'int lexeme)]
+     [float-literal (tok-con line col 'float lexeme)]
+     [operation (tok-con line col 'op lexeme)]
      [(eof) '()]))
   
   ; Tokenizes the value and continues lexical analysis.
@@ -40,7 +43,14 @@
     (cons (tokenize line col key lexeme) (jamrb-lex port)))
 
   ; Return the result of lexically analyzing the given port.
-  (lex port))
+  (with-handlers ([exn:fail? 
+                   (λ (e) 
+                     (string-append "Invalid syntax at (" 
+                                    (number->string line) 
+                                    ", " 
+                                    (number->string col) 
+                                    ")"))])
+    (lex port)))
 
 ; Read in a file, code, or use the variable test input.
 (match (current-command-line-arguments)
