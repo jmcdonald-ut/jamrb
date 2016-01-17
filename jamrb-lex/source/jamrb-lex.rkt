@@ -9,6 +9,7 @@
          "numbers.rkt"
          "operations.rkt"
          "keywords.rkt"
+         "identifiers.rkt"
          "token.rkt")
 
 (define input (void))
@@ -38,6 +39,8 @@
      [float-literal (tok-con line col 'float lexeme)]
      [operation (tok-con line col 'op lexeme)]
      [keyword (tok-con line col 'kw lexeme)]
+     [period (tok-con line col 'period lexeme)]
+     [identifier (tok-con line col 'ident lexeme)]
      [(eof) '()]))
   
   ; Tokenizes the value and continues lexical analysis.

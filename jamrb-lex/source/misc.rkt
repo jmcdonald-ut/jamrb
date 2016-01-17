@@ -8,7 +8,7 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre))
 
-(provide comment newline space)
+(provide comment newline space period)
 
 ; Comments:
 (define-lex-abbrev comment (:: (:+ "#")
@@ -17,6 +17,9 @@
 
 ; Newlines:
 (define-lex-abbrev newline (:: #\newline))
+
+; Periods:
+(define-lex-abbrev period (:: #\.))
 
 ; Spaces:
 (define-lex-abbrev space (:+ whitespace))
