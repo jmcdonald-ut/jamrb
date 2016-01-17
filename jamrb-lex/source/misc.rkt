@@ -1,4 +1,4 @@
-;; jamrb-spec.rkt
+;; misc.rkt
 ;;
 ;; "With my last breath, I curse Zoidberg!"
 ;;
