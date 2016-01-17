@@ -8,6 +8,7 @@
          "misc.rkt"
          "numbers.rkt"
          "operations.rkt"
+         "keywords.rkt"
          "token.rkt")
 
 (define input (void))
@@ -36,6 +37,7 @@
      [int-literal (tok-con line col 'int lexeme)]
      [float-literal (tok-con line col 'float lexeme)]
      [operation (tok-con line col 'op lexeme)]
+     [keyword (tok-con line col 'kw lexeme)]
      [(eof) '()]))
   
   ; Tokenizes the value and continues lexical analysis.
