@@ -29,18 +29,16 @@
   ; Define our lexer.
   (define lex
     (lexer
-     [comment (handle-comment line col lexeme)]
-     [space (handle-space line col lexeme)]
+     [comment (tokenize-and-continue line col 'comment lexeme)]
+     [newline (tokenize-and-continue line col 'nl lexeme)]
+     [space (tokenize-and-continue line col 'sp lexeme)]
+     [number-literal (tokenize-and-continue line col 'int lexeme)]
      [(eof) '()]))
   
-  ; Handles a matched comment.
-  (define (handle-comment line col lexeme) 
-    (cons (tokenize line col 'comment lexeme) (jamrb-lex port)))
-  
-  ; Handles a matched arbitrary amount of space.
-  (define (handle-space line col lexeme)
-    (cons (tokenize line col 'sp lexeme) (jamrb-lex port)))
-  
+  ; Tokenizes the value and continues
+  (define (tokenize-and-continue line col key lexeme)
+    (cons (tokenize line col key lexeme) (jamrb-lex port)))
+
   ; Return the result of lexically analyzing the given port.
   (lex port))
 
@@ -56,4 +54,4 @@
 
 (set! input (open-input-string (port->string input)))
 (define tokens (jamrb-lex input))
-(pretty-print tokens)
+(pretty-write tokens)
