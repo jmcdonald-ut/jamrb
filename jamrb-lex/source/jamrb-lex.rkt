@@ -10,6 +10,7 @@
          "operations.rkt"
          "keywords.rkt"
          "identifiers.rkt"
+         "port.rkt"
          "token.rkt")
 
 (define input (void))
@@ -33,7 +34,7 @@
   (define lex
     (lexer
      [comment (tok-con line col 'comment lexeme)]
-     [newline (tok-con line col 'nl lexeme)]
+     [newlines (newline-lex (unget port (string-length lexeme)) jamrb-lex)]
      [space (tok-con line col 'sp lexeme)]
      [int-literal (tok-con line col 'int lexeme)]
      [float-literal (tok-con line col 'float lexeme)]
