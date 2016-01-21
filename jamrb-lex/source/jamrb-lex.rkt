@@ -10,6 +10,7 @@
          "operations.rkt"
          "keywords.rkt"
          "identifiers.rkt"
+         "strings.rkt"
          "port.rkt"
          "token.rkt")
 
@@ -42,6 +43,7 @@
      [keyword (tok-con line col 'kw lexeme)]
      [period (tok-con line col 'period lexeme)]
      [identifier (tok-con line col 'ident lexeme)]
+     [string-opening (string-lex port lexeme jamrb-lex)]
      [(eof) '()]))
   
   ; Tokenizes the value and continues lexical analysis.
