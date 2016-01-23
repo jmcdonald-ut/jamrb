@@ -7,12 +7,12 @@
 
 (provide (all-defined-out))
 
-(define-lex-abbrev pair-line-column 
-  (:: (:= 1 #\[) 
-      (:+ numeric) 
-      (:* whitespace) 
-      (:= 1 #\,) 
-      (:* whitespace) 
+(define-lex-abbrev pair-line-column
+  (:: (:= 1 #\[)
+      (:+ numeric)
+      (:* whitespace)
+      (:= 1 #\,)
+      (:* whitespace)
       (:+ numeric)
       (:= 1 #\])))
 

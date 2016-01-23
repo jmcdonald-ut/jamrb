@@ -13,8 +13,10 @@
   (map string->number (regexp-match* #rx"[0-9]+" str)))
 
 (define (value->string str)
-  (substring str 1 (- (string-length str) 1)))
-  
+  (regexp-replace* #px"\\\\" 
+                   (substring str 1 (- (string-length str) 1))
+                   ""))
+
 
 (define (unget port [count 1])
   (let ([pos (file-position port)])
@@ -28,21 +30,21 @@
      [pair-line-column
       (cons (pair-line-column-string->pair lexeme)
             (token-lexer port))]
-     
+
      [token-type
       (cons (ruby-symbol-string->symbol lexeme)
             (token-lexer port))]
-     
+
      [value (cons (value->string lexeme) (token-lexer port))]
-     
+
      [(:or #\[ #\, whitespace #\newline) (token-lexer port)]
-     
+
      [(:or (:: #\] (:* whitespace) #\,) #\]) '()]
-     
+
      [#\newline (token-lexer port)]))
-  
+
   (internal-lexer port))
-     
+
 (define (ripper-lexer port [lst #f])
   (define inner-lexer
     (lexer
@@ -51,24 +53,23 @@
         (unget port (string-length lexeme))
         (let ([token (token-lexer port)])
           (cons `(Token ,token) (inner-lexer port))))]
-     
+
      [#\[
-      (if lst 
+      (if lst
           (cons (ripper-lexer port '()) lst)
           (ripper-lexer port '()))]
-     
+
      [#\] '()]
-     
+
      [(:or whitespace #\newline) (inner-lexer port)]
-     
+
      [#\, (inner-lexer port)]
-     
+
      [(eof) '()]))
-  
+
   (inner-lexer port))
 
 (define (sanitized-input)
   (open-input-string (port->string (current-input-port))))
 
 (pretty-write (ripper-lexer (sanitized-input)))
-
