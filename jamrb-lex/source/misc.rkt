@@ -4,7 +4,6 @@
 ;;
 ;; By Jonathon McDonald
 #lang racket
-
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          "port.rkt"
@@ -30,14 +29,14 @@
   (let-values ([(port-line port-col _) (port-next-location port)])
     (set! line port-line)
     (set! col port-col))
-  
+
   ; Internal lexer that should only be called directly at the end of the function.
   (define internal-lex
     (lexer
      [#\newline (tok-con line col (if first? 'nl 'ignored_nl) lexeme)]
      [any-char (callback (unget port))]
-     [(eof) (callback (unget port))]))
-  
+     [(eof) '()]))
+
   ; (number, number, symbol, string) -> '()
   (define (tok-con line col key lexeme)
     (cons (tokenize line col key lexeme) (newline-lex port callback #f)))

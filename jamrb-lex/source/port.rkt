@@ -13,5 +13,5 @@
     (if (> pos (- 1 count))
         (file-position port (- pos count))
         (void)))
-  
+
   port)

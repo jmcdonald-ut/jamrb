@@ -10,6 +10,6 @@
 (define (normalize-key key) (string->symbol (string-append "on_" (symbol->string key))))
 
 (define (tokenize line col key value)
-  `(Token ((,line ,col) 
-           ,(normalize-key key) 
+  `(Token ((,line ,col)
+           ,(normalize-key key)
            ,value)))

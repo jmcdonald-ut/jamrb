@@ -17,13 +17,13 @@
 (define input (void))
 (define test-input "foo = true")
 
-;; `jamrb-lex` performs lexical anlaysis on an input stream.  Upon finishing this will 
+;; `jamrb-lex` performs lexical anlaysis on an input stream.  Upon finishing this will
 ;; return either a list of tokens, or an error will be emitted.
 (provide jamrb-lex)
 (define (jamrb-lex port)
   ; Explicitally enable line/column reporting for the given port.
   (port-count-lines! port)
-  
+
   ; Extract the line and column for debugging purposes.
   (define line #f)
   (define col #f)
@@ -45,18 +45,18 @@
      [identifier (tok-con line col 'ident lexeme)]
      [string-opening (string-lex port lexeme jamrb-lex)]
      [(eof) '()]))
-  
+
   ; Tokenizes the value and continues lexical analysis.
   (define (tok-con line col key lexeme)
     (cons (tokenize line col key lexeme) (jamrb-lex port)))
 
   ; Return the result of lexically analyzing the given port.
-  (with-handlers ([exn:fail? 
-                   (λ (e) 
-                     (string-append "Invalid syntax at (" 
-                                    (number->string line) 
-                                    ", " 
-                                    (number->string col) 
+  (with-handlers ([exn:fail?
+                   (λ (e)
+                     (string-append "Invalid syntax at ("
+                                    (number->string line)
+                                    ", "
+                                    (number->string col)
                                     ")"))])
     (lex port)))
 
