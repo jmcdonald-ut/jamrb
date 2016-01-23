@@ -44,7 +44,7 @@
      [float-literal (tok-con line col 'float lexeme)]
      [operation (tok-con line col 'op lexeme)]
      [keyword (tok-con line col 'kw lexeme)]
-     [period (tok-con line col 'period lexeme)]
+     [punct (tok-con line col (punct->symbol lexeme) lexeme)]
      [identifier (tok-con line col 'ident lexeme)]
      [string-opening (string-lex port lexeme line col jamrb-lex)]
      [(eof) '()]))

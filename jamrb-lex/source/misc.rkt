@@ -9,7 +9,7 @@
          "port.rkt"
          "token.rkt")
 
-(provide comment newlines newline-lex space period)
+(provide comment newlines newline-lex space period punct punct->symbol)
 
 ; Comments:
 (define-lex-abbrev comment (:: (:+ "#")
@@ -46,6 +46,21 @@
 
   ; Begin lexically analyzing new lines.
   (internal-lex port))
+
+; Punctuation:
+(define-lex-abbrev punct (:or #\. #\, #\( #\) #\{ #\} #\[ #\]))
+(define punct-symbol-ht (make-hash))
+(hash-set*! punct-symbol-ht 
+            "." 'period
+            "," 'comma
+            "(" 'lparen
+            ")" 'rparen
+            "{" 'lbrace
+            "}" 'rbrace
+            "[" 'lbracket
+            "]" 'rbracket)
+
+(define (punct->symbol value) (hash-ref punct-symbol-ht value))
 
 ; Periods:
 (define-lex-abbrev period (:: #\.))
