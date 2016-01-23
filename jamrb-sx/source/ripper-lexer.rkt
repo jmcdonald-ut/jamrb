@@ -13,9 +13,20 @@
   (map string->number (regexp-match* #rx"[0-9]+" str)))
 
 (define (value->string str)
-  (regexp-replace* #px"\\\\" 
-                   (substring str 1 (- (string-length str) 1))
-                   ""))
+  ; This will probably need to be changed to something more sturdy...but for now this will work.
+  (define (convert-to-newlines str)
+    (regexp-replace* #px"\\\\n" str "\n"))
+  
+  (define (convert-quotes str)
+    (regexp-replace* #rx"\\\\\"" str "\""))
+  
+  (define (convert-escapes str)
+    (regexp-replace* #rx"\\\\\\" str "\\"))
+  
+  (define (convert* str)
+    (convert-escapes (convert-quotes (convert-to-newlines str))))
+  
+  (convert* (substring str 1 (- (string-length str) 1))))
 
 
 (define (unget port [count 1])
