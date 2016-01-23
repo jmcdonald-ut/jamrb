@@ -29,12 +29,15 @@
   (let-values ([(port-line port-col _) (port-next-location port)])
     (set! line port-line)
     (set! col port-col))
+  
+  (define (rewind)
+    (unget-and-set-position! port line col))
 
   ; Internal lexer that should only be called directly at the end of the function.
   (define internal-lex
     (lexer
      [#\newline (tok-con line col (if first? 'nl 'ignored_nl) lexeme)]
-     [any-char (callback (unget port))]
+     [any-char (callback (rewind))]
      [(eof) '()]))
 
   ; (number, number, symbol, string) -> '()

@@ -30,12 +30,15 @@
   (let-values ([(port-line port-col _) (port-next-location port)])
     (set! line port-line)
     (set! col port-col))
+  
+  (define (rewind length)
+    (unget-and-set-position! port line col length))
 
   ; Define our lexer.
   (define lex
     (lexer
      [comment (tok-con line col 'comment lexeme)]
-     [newlines (newline-lex (unget port (string-length lexeme)) jamrb-lex)]
+     [newlines (newline-lex (rewind (string-length lexeme)) jamrb-lex)]
      [space (tok-con line col 'sp lexeme)]
      [int-literal (tok-con line col 'int lexeme)]
      [float-literal (tok-con line col 'float lexeme)]
@@ -43,7 +46,7 @@
      [keyword (tok-con line col 'kw lexeme)]
      [period (tok-con line col 'period lexeme)]
      [identifier (tok-con line col 'ident lexeme)]
-     [string-opening (string-lex port lexeme jamrb-lex)]
+     [string-opening (string-lex port lexeme line col jamrb-lex)]
      [(eof) '()]))
 
   ; Tokenizes the value and continues lexical analysis.

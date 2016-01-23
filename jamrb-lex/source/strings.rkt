@@ -35,25 +35,16 @@
 (define (char-at value [index 0]) (list-ref (string->list value) index))
 
 ; (io, string, func) -> '()
-(define (string-lex port opening callback)
-  ; Explicitally enable line/column reporting for the given port.
-  (port-count-lines! port)
-
-  ; Extract the line and column given the current port.
-  (define line #f)
-  (define col #f)
-  (let-values ([(port-line port-col _) (port-next-location port)])
-    (set! line port-line)
-    (set! col port-col))
+(define (string-lex port opening line col callback)
 
   ; TO-DO: Steps 1, 2
   (tok-con line col 'tstring_beg opening
         ; -> '()
         (λ ()
-          (internal-string-lex port "" opening callback))))
+          (internal-string-lex port #f #f "" opening callback))))
 
 
-(define (internal-string-lex port contents opening callback)
+(define (internal-string-lex port sline scol contents opening callback)
   ; Explicitally enable line/column reporting for the given port.
   (port-count-lines! port)
 
@@ -61,6 +52,8 @@
   (define line #f)
   (define col #f)
   (let-values ([(port-line port-col _) (port-next-location port)])
+    (cond [(false? sline) (set! sline port-line)])
+    (cond [(false? scol) (set! scol port-col)])
     (set! line port-line)
     (set! col port-col))
 
@@ -70,8 +63,8 @@
   ; (string) -> void
   (define (append-char-unless-opening str)
     (if (equal? str opening)
-        (tok-con line col 'tstring_contents contents complete-string)
-        (internal-string-lex port (string-append contents str) opening callback)))
+        (tok-con sline scol 'tstring_content contents complete-string)
+        (internal-string-lex port sline scol (string-append contents str) opening callback)))
 
   (define internal-lex
     (lexer
