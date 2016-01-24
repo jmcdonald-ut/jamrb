@@ -18,5 +18,4 @@ RSpec.configure do |config|
   end
 
   config.extend OutputSpecHelper::Extends, :output_specs
-  config.include OutputSpecHelper::Includes, :output_specs
 end

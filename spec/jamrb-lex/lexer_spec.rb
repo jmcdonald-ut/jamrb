@@ -2,7 +2,7 @@ RSpec.describe 'jamrb-lex', :output_specs do
   project_path = JamRb[:root] + "/jamrb-lex"
   fixtures_path = JamRb[:root] + "/jamrb-lex/test/rb-sx-tests"
 
-  before(:all) { make_executable_in project_path }
+  make_executable_in project_path
 
   fetch_fixtures(fixtures_path).each do |fixture|
     input = File.basename fixture

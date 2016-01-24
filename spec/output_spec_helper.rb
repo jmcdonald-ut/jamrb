@@ -3,10 +3,10 @@ require 'shellwords'
 require 'open3'
 
 module OutputSpecHelper
-  module Includes
+  module Extends
     def make_executable_in(path)
+      puts "Executing `$ make` at: `#{path}`"
       navigate_to path
-      execute! "make clean"
       execute! "make"
     end
 
@@ -23,9 +23,7 @@ module OutputSpecHelper
     def navigate_to(path)
       FileUtils.cd path
     end
-  end
 
-  module Extends
     def fetch_fixtures(path)
       Dir.entries(path)
         .keep_if { |file_name| file? file_name, path }
