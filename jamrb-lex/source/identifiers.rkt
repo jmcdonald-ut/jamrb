@@ -9,4 +9,5 @@
 
 (provide identifier)
 
+;; Defines the lexer abbreviation of a ruby identifier.
 (define-lex-abbrev identifier (:: (:+ (:or #\_ lower-case upper-case numeric))))

@@ -10,6 +10,8 @@
 
 (provide keyword)
 
+;; Defines the lexer abbreviation for a ruby keyword.  The list of ruby keywords can be found at
+;; http://ruby-doc.org/core-2.3.0/doc/keywords_rdoc.html
 (define-lex-abbrev keyword (:or "__ENCODING__" "__LINE__" "__FILE__" "BEGIN" "END" "alias" "and"
                                 "begin" "break" "case" "class" "def" "defined?" "do" "else" "elsif"
                                 "end" "ensure" "false" "for" "if" "in" "module" "nil" "not" "or"

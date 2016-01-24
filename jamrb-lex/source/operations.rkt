@@ -9,6 +9,7 @@
 
 (provide operation)
 
+;; Defines the lexer abberviation for the various operations.
 (define-lex-abbrev operation (:or #\! #\~ #\+ #\- #\* #\/ #\% #\& #\> #\< #\= #\| #\^
                                   "**" ">>" "<<" "&&" "||" ".." "..." "<=>" "==" "==="
                                   "=~" "!~" "+=" "-=" "*=" "/=" "^=" "%=" "**=" ">=" "<="))

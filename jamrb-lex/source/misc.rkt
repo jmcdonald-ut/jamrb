@@ -9,29 +9,29 @@
          "port.rkt"
          "token.rkt")
 
-(provide comment newlines newline-lex space period punct punct->symbol)
+(provide comment
+         newlines
+         newline-lex
+         space
+         punct
+         punct->symbol)
 
-; Comments:
+;; Defines the lexer abberviation for a ruby style comment.
 (define-lex-abbrev comment (:: (:+ "#")
                                (:* (:- any-char #\newline))
                                (:? #\newline)))
 
-; Newlines:
+;; Defines the lexer abberviation for one or more newlines.
 (define-lex-abbrev newlines (:+ #\newline))
 
+;; (port, fn, bool?) -> void
+;;
+;; Scans the port for one or more newlines.  The first newline is tokenized as a significant, while
+;; subsequent newlines are tokenized as insignificant.  Once all newlines the callback is invoked,
+;; and assumed to continue tokenizing the port.
 (define (newline-lex port callback [first? #t])
-  ; Explicitally enabled line/column reporting for the given port.
-  (port-count-lines! port)
-
-  ; Extract the line and column for debugging purposes.
-  (define line #f)
-  (define col #f)
-  (let-values ([(port-line port-col _) (port-next-location port)])
-    (set! line port-line)
-    (set! col port-col))
-  
-  (define (rewind)
-    (unget-and-set-position! port line col))
+  (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
 
   ; Internal lexer that should only be called directly at the end of the function.
   (define internal-lex
@@ -47,10 +47,15 @@
   ; Begin lexically analyzing new lines.
   (internal-lex port))
 
-; Punctuation:
+;; Defines the lexer abbreviation for ruby-specific punctuation.
 (define-lex-abbrev punct (:or #\. #\, #\( #\) #\{ #\} #\[ #\]))
+
+;; Defines a hash table that will hold ruby-specific punctuation as the key which maps to its token
+;; symbol.
 (define punct-symbol-ht (make-hash))
-(hash-set*! punct-symbol-ht 
+
+;; Defines the actual key/value pairs for the ruby-specific punctuation.
+(hash-set*! punct-symbol-ht
             "." 'period
             "," 'comma
             "(" 'lparen
@@ -60,10 +65,11 @@
             "[" 'lbracket
             "]" 'rbracket)
 
-(define (punct->symbol value) (hash-ref punct-symbol-ht value))
+;; (string) -> symbol
+;;
+;; Returns the token symbol for the given punctuation.
+(define (punct->symbol value)
+  (hash-ref punct-symbol-ht value))
 
-; Periods:
-(define-lex-abbrev period (:: #\.))
-
-; Spaces:
-(define-lex-abbrev space (:+ (:- whitespace #\n)))
+;; Defines a lexer abbreviation for all whitespace except newlines.
+(define-lex-abbrev space (:+ (:- whitespace #\newline)))
