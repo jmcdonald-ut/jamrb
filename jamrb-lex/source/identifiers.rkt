@@ -3,7 +3,7 @@
 ;; "There's a time and a place for everything, and it's called college."
 ;;
 ;; Identifiers will be tough for various reasons.  Some valid names include:
-;;   
+;;
 ;;   foo
 ;;   ==
 ;;   []
@@ -31,14 +31,14 @@
          id-lex)
 
 ;; Defines the lexer abbreviation of a ruby identifier.
-;; 
-;; NOTE: I may have to literally go through an identifer character by character but I think that 
-;; this is an okay attempt.  
+;;
+;; NOTE: I may have to literally go through an identifer character by character but I think that
+;; this is an okay attempt.
 (define-lex-abbrev id-start any-char)
 
 ;; (string) -> char
 ;;
-;; Returns a single character string as an actual character.  Raises an error if the string length is 
+;; Returns a single character string as an actual character.  Raises an error if the string length is
 ;; not equal to one.
 (define (string->char value)
   (cond [(not (eq? 1 (string-length value))) (raise-argument-error 'value "string:[1,1]?" value)])
@@ -48,8 +48,8 @@
 ;;
 ;; Returns a value indicating whether the character is an id terminator.
 (define (id-char-terminator? val)
-  (match val 
-    [(or #\? #\!) #t] 
+  (match val
+    [(or #\? #\!) #t]
     [_ #f]))
 
 ;; (char) -> bool
@@ -66,39 +66,43 @@
 
 ;; (port, fn) -> '()
 ;;
-;; Processes and tokenizes an identifier.  Once tokenization is complete it will invoke the callback 
+;; Processes and tokenizes an identifier.  Once tokenization is complete it will invoke the callback
 ;; with the port as an argument.  The port should be rewound to the first character.
-(define (id-lex port callback [seen-terminator? #f] [sline #f] [scol #f])
+(define (id-lex port callback [contents ""] [sline #f] [scol #f])
   (define-values (line col) (watch-port-position! port))
-  (define contents "")
-  
+  (define rewind (prepare-port-rewinder port line col))
+
   (cond [(false? sline) (set! sline line)])
   (cond [(false? scol) (set! scol col)])
-  
+
   ;; (string) -> string
   ;;
   ;; Sets contents to be equal to memo appended to itself.
   (define (append-contents! memo) (set! contents (string-append contents memo)))
-  
+
   ;; (string) -> '()
   ;;
   ;; Appends the memo to contents and continues to lex the string.
   (define (append-and-continue! memo)
     (append-contents! memo)
-    (lex port))
-  
+    (id-lex port callback contents sline scol))
+
   ;; (string, bool?) -> '()
   ;;
   ;; Completes the identifier and continues on tokenizing by passing control back to the caller.
   (define (complete-id! memo [should-unget #t])
     (if should-unget
-        (unget port)
+        (rewind (string-length memo))
         (append-contents! memo))
+
+    ;; Raise an exception if the contents string is empty.
+    (cond [(eq? (string-length contents) 0) (raise 'invalid_syntax #t)])
+
     (cons (tokenize sline scol 'ident contents) (callback port)))
 
   ;; (string) -> '()
   ;;
-  ;; Inspects the string (which should simply be a character) and decides whether to keep feeding in 
+  ;; Inspects the string (which should simply be a character) and decides whether to keep feeding in
   ;; characters or complete the identifier token.
   (define (match-id-char memo)
     (match (string->char memo)
@@ -106,6 +110,6 @@
       [(app id-char-invalid? #t) (complete-id! memo)]
       [(app id-char-terminator? #t) (complete-id! memo #f)]
       [_ (append-and-continue! memo)]))
-  
+
   (define lex (lexer [any-char (match-id-char lexeme)] [(eof) (complete-id! "")]))
   (lex port))
