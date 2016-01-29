@@ -21,6 +21,7 @@
          "token.rkt")
 
 (provide string-lex
+         string-lex-no-open
          string-opening)
 
 (define tok-con (prepare-tokenizer))
@@ -32,6 +33,12 @@
 (define (string-lex port opening line col callback)
   (tok-con line col 'tstring_beg opening
            (λ () (internal-string-lex port opening callback))))
+
+;; (port, string, fn) -> '()
+;;
+;; Tokenizes the string without creating a token for the string opening.  Returns a list of tokens.
+(define (string-lex-no-open port opening callback)
+  (internal-string-lex port opening callback))
 
 ;; (port, string, fn, string?, bool?, bool?) -> '()
 ;;

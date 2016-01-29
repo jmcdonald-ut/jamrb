@@ -96,7 +96,7 @@
         (append-contents! memo))
 
     ;; Raise an exception if the contents string is empty.
-    (cond [(eq? (string-length contents) 0) (raise 'invalid_syntax #t)])
+    (cond [(eq? (string-length contents) 0) (error "invalid syntax")])
 
     (cons (tokenize sline scol 'ident contents) (callback port)))
 

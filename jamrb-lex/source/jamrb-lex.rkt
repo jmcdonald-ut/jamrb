@@ -41,7 +41,7 @@
      [keyword (tok-con line col 'kw lexeme)]
      [punct (tok-con line col (punct->symbol lexeme) lexeme)]
      [string-opening (string-lex port lexeme line col jamrb-lex)]
-     [symbeg (tok-con line col 'symbeg lexeme)]
+     [symbeg (handle-sym line col lexeme port jamrb-lex)]
      [id-start (id-lex (rewind (string-utf-8-length lexeme)) jamrb-lex)]
      [(eof) '()]))
 
@@ -51,7 +51,8 @@
           (jamrb-lex port)))
 
   ; Return the result of lexically analyzing the given port.
-    (lex port))
+  (with-handlers ([exn:fail? (λ (e) (fail-for-invalid-syntax line col))])
+    (lex port)))
 
 ;; (number, number) -> string
 ;;
