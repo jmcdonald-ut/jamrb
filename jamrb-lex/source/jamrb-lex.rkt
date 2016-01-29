@@ -11,6 +11,7 @@
          "keywords.rkt"
          "identifiers.rkt"
          "strings.rkt"
+         "symbols.rkt"
          "port.rkt"
          "token.rkt")
 
@@ -40,6 +41,7 @@
      [keyword (tok-con line col 'kw lexeme)]
      [punct (tok-con line col (punct->symbol lexeme) lexeme)]
      [string-opening (string-lex port lexeme line col jamrb-lex)]
+     [symbeg (tok-con line col 'symbeg lexeme)]
      [id-start (id-lex (rewind (string-utf-8-length lexeme)) jamrb-lex)]
      [(eof) '()]))
 
