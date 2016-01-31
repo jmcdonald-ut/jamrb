@@ -36,24 +36,24 @@
 
 ;; (port, fn, string, string?, number?, number?) -> '()
 ;;
-;; Tokenizes string contents, the string terminator, and embedded expressions within the string 
+;; Tokenizes string contents, the string terminator, and embedded expressions within the string
 ;; contents.
 (define (lex-string port callback terminator interpolated? [contents ""] [sline #f] [scol #f])
   (define-values (line col) (watch-port-position! port))
   (define-values (char-is-terminator? char-is-escape?) (prepare-string-lex-fns terminator))
-  
+
   (cond [(false? sline) (set! sline line)])
   (cond [(false? scol) (set! scol col)])
-  
+
   (define (handle-embexpr port value)
     (set! value (string-append "\\" value))
     (define (lex-embexpr)
       (callback port continue-string))
     (define (continue-string port)
       (lex-string port callback terminator interpolated?))
-    
+
     (if interpolated?
-        (tok-con line col 'embexpr_beg value lex-embexpr)
+        (tokenize-contents! (λ () (tok-con line col 'embexpr_beg value lex-embexpr)))
         (append-cont! value)))
 
   ;; (string) -> '()
@@ -62,17 +62,22 @@
   (define (append-cont! value)
     (set! contents (string-append contents value))
     (lex-string port callback terminator interpolated? contents sline scol))
-  
+
+  (define (tokenize-contents! callback)
+    (if (> (string-length contents) 0)
+        (tok-con sline scol 'tstring_content contents callback)
+        (callback)))
+
   ;; () -> '()
   ;;
-  ;; Completes the string by creating the string content and string end tokens, and passing the port 
+  ;; Completes the string by creating the string content and string end tokens, and passing the port
   ;; back to the supplied callback.
   (define (complete-string!)
     (define (call-home)
       (callback port))
     (define (tokenize-terminator)
       (tok-con line col 'tstring_end terminator call-home))
-    
+
     (if (> (string-length contents) 0)
         (tok-con sline scol 'tstring_content contents tokenize-terminator)
         (tokenize-terminator)))
@@ -86,28 +91,35 @@
 
   (define internal-lex (prepare-lexer port handle-char handle-embexpr))
   (internal-lex port))
-  
+
 
 ;; (port, string, fn) -> '()
 ;;
-;; Returns a pair with the first value being a token containing the string `opening` and the second 
+;; Returns a pair with the first value being a token containing the string `opening` and the second
 ;; value being the rest of the tokens scanned.
 (define (string-lex port opening line col callback)
-  (define interpolated (equal? opening "\""))
-  (tok-con line col 'tstring_beg opening
-           (λ () (lex-string port callback opening interpolated))))
+  (define continue-lex (curry lex-string port callback opening (should-interpolate? opening)))
+  (tok-con line col 'tstring_beg opening continue-lex))
+           ;(λ () (lex-string port callback opening (should-interpolate? opening)))))
 
 ;; (port, string, fn) -> '()
 ;;
 ;; Tokenizes the string without creating a token for the string opening.  Returns a list of tokens.
 (define (string-lex-no-open port opening callback)
   (define interpolated? #t)
-  (lex-string port callback opening interpolated?))
+  (lex-string port callback opening (should-interpolate? opening)))
 
-;; Defines the lexer abbreviation for a string opening. 
+;; Defines the lexer abbreviation for a string opening.
 ;;
 ;; TO-DO: Support %q, %Q.
 (define-lex-abbrev string-opening (:or str-dbl str-single))
 
 ;; Defines the individual lexer abbreviations for string.
 (define-lex-abbrevs [str-dbl (:or #\")] [str-single (:or #\')] [embexpr (:: #\# #\{)])
+
+;; (string) -> bool
+;;
+;; Returns a value indicating whether the string should be interpolated.
+(define (should-interpolate? value)
+  (or (equal? value "\"")
+      (equal? value "%Q{")))

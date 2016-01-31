@@ -23,7 +23,7 @@
 
 ;; (string) -> bool
 ;;
-;; Returns a value indicating whether the value is an embedded expression terminator.  A value is an 
+;; Returns a value indicating whether the value is an embedded expression terminator.  A value is an
 ;; embedded expression terminator if it is "}" and there is no matching "{" at the top of the stack.
 (define (embexpr-terminator? value)
   (and (equal? value "}")
@@ -56,8 +56,8 @@
   (if (punct-is-open? value)
       (push-punct! value)
       (pop-punct-pair! value))
-  
-  (tokenize line col value))
+
+  (tokenize line col (punct->symbol value) value))
 
 ;; Initializes a hash table which will contain the punctuation.
 (define punct-symbol-ht (make-hash))
@@ -93,10 +93,10 @@
 ;; (string) -> '()
 ;;
 ;; Pushes to the stack and returns the current list of values in the stack.
-(define (push-punct! value) 
+(define (push-punct! value)
   (set! punct-stack (cons value punct-stack))
   punct-stack)
-  
+
 ;; () -> string
 ;;
 ;; Returns the top of the stack.
@@ -113,11 +113,11 @@
 
 ;; (string) -> string
 ;;
-;; Pops the stack and returns the result.  Raises an error if the popped value is not a valid pair 
+;; Pops the stack and returns the result.  Raises an error if the popped value is not a valid pair
 ;; with `close-value`.
 (define (pop-punct-pair! close-value)
   (define return-val (car punct-stack))
-  (cond [(not (equal? (hash-ref punct-pairs-ht return-val) close-value)) 
+  (cond [(not (equal? (hash-ref punct-pairs-ht return-val) close-value))
          (raise-syntax-error 'unexpected-token (format "Expecting ~a" return-val))])
 
   (set! punct-stack (cdr punct-stack))

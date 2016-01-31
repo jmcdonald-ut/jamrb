@@ -26,8 +26,8 @@
 ;;
 ;; Lexically analyzes the given I/O port against the ruby syntax.
 ;;
-;; Returns a list of tokens in the order they were observed once it reaches the EOF.  If a terminator 
-;; character and callback are supplied then upon reaching that character the callback will be invoked 
+;; Returns a list of tokens in the order they were observed once it reaches the EOF.  If a terminator
+;; character and callback are supplied then upon reaching that character the callback will be invoked
 ;; with the port.
 (define (jamrb-lex port [embexpr-callback #f])
   (define-values (line col) (watch-port-position! port))
@@ -43,15 +43,15 @@
      [int-literal (tok-con line col 'int lexeme)]
      [float-literal (tok-con line col 'float lexeme)]
      [operation (tok-con line col 'op lexeme)]
-     [keyword (tok-con line col 'kw lexeme)]
+     [keyword (lex-keyword (rewind (string-length lexeme)) jamrb-lex)]
      [punct (handle-punct! line col lexeme)]
      [string-opening (string-lex port lexeme line col jamrb-lex)]
      [symbeg (handle-sym line col lexeme port jamrb-lex)]
      [embexpr-end (cons (tokenize line col 'embexpr_end lexeme) (embexpr-callback port))]
-     [id-start (id-lex (rewind (string-utf-8-length lexeme)) 
+     [id-start (id-lex (rewind (string-utf-8-length lexeme))
                        (λ (port) (jamrb-lex port embexpr-callback)))]
      [(eof) '()]))
-  
+
   (define (handle-punct! line col lexeme)
     (if (embexpr-terminator? lexeme)
         (cons (tokenize line col 'embexpr_end lexeme) (embexpr-callback port))
