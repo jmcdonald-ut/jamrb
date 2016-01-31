@@ -48,7 +48,8 @@
      [string-opening (string-lex port lexeme line col jamrb-lex)]
      [symbeg (handle-sym line col lexeme port jamrb-lex)]
      [embexpr-end (cons (tokenize line col 'embexpr_end lexeme) (embexpr-callback port))]
-     [id-start (id-lex (rewind (string-utf-8-length lexeme)) (λ (port) (jamrb-lex port embexpr-callback)))]
+     [id-start (id-lex (rewind (string-utf-8-length lexeme)) 
+                       (λ (port) (jamrb-lex port embexpr-callback)))]
      [(eof) '()]))
   
   (define (handle-punct! line col lexeme)
