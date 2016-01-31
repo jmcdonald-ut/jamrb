@@ -34,7 +34,7 @@
 ;;
 ;; NOTE: I may have to literally go through an identifer character by character but I think that
 ;; this is an okay attempt.
-(define-lex-abbrev id-start any-char)
+(define-lex-abbrev id-start (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\))))
 
 ;; (string) -> char
 ;;

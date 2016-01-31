@@ -5,6 +5,7 @@
 ;; By Jonathon McDonald
 #lang racket
 (require parser-tools/lex
+         racket/trace
          "misc.rkt"
          "numbers.rkt"
          "operations.rkt"
@@ -13,6 +14,7 @@
          "strings.rkt"
          "symbols.rkt"
          "port.rkt"
+         "punct.rkt"
          "token.rkt")
 
 (provide jamrb-lex)
@@ -20,14 +22,17 @@
 (define input (void))
 (define test-input "foo = true")
 
-;; (port) -> '() || string
+;; (port, fn?) -> '() || string
 ;;
-;; Lexically analyzes the given I/O port against the ruby syntax.  Returns a list of tokens in the
-;; order they were observed.  In the event of an error it returns a string explaining the issue that
-;; was encountered.
-(define (jamrb-lex port)
+;; Lexically analyzes the given I/O port against the ruby syntax.
+;;
+;; Returns a list of tokens in the order they were observed once it reaches the EOF.  If a terminator 
+;; character and callback are supplied then upon reaching that character the callback will be invoked 
+;; with the port.
+(define (jamrb-lex port [embexpr-callback #f])
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
+  (define-lex-abbrev lex-term terminator)
 
   ; Define our lexer.
   (define lex
@@ -39,16 +44,22 @@
      [float-literal (tok-con line col 'float lexeme)]
      [operation (tok-con line col 'op lexeme)]
      [keyword (tok-con line col 'kw lexeme)]
-     [punct (tok-con line col (punct->symbol lexeme) lexeme)]
+     [punct (handle-punct! line col lexeme)]
      [string-opening (string-lex port lexeme line col jamrb-lex)]
      [symbeg (handle-sym line col lexeme port jamrb-lex)]
-     [id-start (id-lex (rewind (string-utf-8-length lexeme)) jamrb-lex)]
+     [embexpr-end (cons (tokenize line col 'embexpr_end lexeme) (embexpr-callback port))]
+     [id-start (id-lex (rewind (string-utf-8-length lexeme)) (λ (port) (jamrb-lex port embexpr-callback)))]
      [(eof) '()]))
+  
+  (define (handle-punct! line col lexeme)
+    (if (embexpr-terminator? lexeme)
+        (cons (tokenize line col 'embexpr_end lexeme) (embexpr-callback port))
+        (cons (tokenize-punct! line col lexeme) (jamrb-lex port embexpr-callback))))
 
   ; Tokenizes the value and continues lexical analysis.
   (define (tok-con line col key lexeme)
     (cons (tokenize line col key lexeme)
-          (jamrb-lex port)))
+          (jamrb-lex port embexpr-callback)))
 
   ; Return the result of lexically analyzing the given port.
   (with-handlers ([exn:fail? (λ (e) (fail-for-invalid-syntax line col))])
