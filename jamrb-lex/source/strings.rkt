@@ -7,23 +7,58 @@
 (require racket/trace
          parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
+         "misc.rkt"
          "port.rkt"
          "token.rkt")
 
 (provide string-lex
          string-lex-no-open
-         string-opening)
+         string-opening
+         handle-heredoc
+         heredoc-beg)
 
 (define tok-con (prepare-tokenizer))
+
+(define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~)) (:+ (:- any-char #\newline))))
+
+(define (handle-heredoc port callback [heredoc ""])
+  (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
+  (define (fill-contents port)
+    (lex-string port callback (regexp-replace #rx"<<[-~]?(.*)" heredoc "\\1") #t))
+
+  (define internal-lex
+    (lexer
+     [heredoc-beg (tok-con line col 'heredoc_beg lexeme (λ () (handle-heredoc port callback lexeme)))]
+     [newlines (newline-lex (rewind (string-length lexeme)) fill-contents)]))
+  (internal-lex port))
 
 ;; (string) -> '():values
 ;;
 ;; Taking the terminator, returns a collection of useful values for lexing strings.
 (define (prepare-string-lex-fns terminator)
-  (let* ([char-is-terminator? (curry equal? terminator)]
-         [char-is-escape? (curry equal? "\\")])
-    (values char-is-terminator?
-            char-is-escape?)))
+  (define (is-full-terminator? char-string port)
+    (define-values (line col) (watch-port-position! port))
+    (define rewind (prepare-port-rewinder port line col))
+    
+    (define len (string-length terminator))
+    (define read-len (- len (string-length char-string)))
+    
+    (define in (string-append char-string (read-string read-len port)))
+    (define matches? (equal? in terminator))
+    (rewind read-len)
+    
+    matches?)
+
+  (define (is-terminator? char-string port)
+    (if (equal? char-string terminator)
+        #t
+        (if (equal? char-string (char->string (string-ref terminator 0)))
+            (is-full-terminator? char-string port)
+            #f)))
+  
+  (define char-is-escape? (curry equal? "\\"))
+  (values is-terminator? char-is-escape?))
 
 ;; (port, fn, fn?) -> fn
 ;;
@@ -40,7 +75,7 @@
 ;; contents.
 (define (lex-string port callback terminator interpolated? [contents ""] [sline #f] [scol #f])
   (define-values (line col) (watch-port-position! port))
-  (define-values (char-is-terminator? char-is-escape?) (prepare-string-lex-fns terminator))
+  (define-values (is-terminator? char-is-escape?) (prepare-string-lex-fns terminator))
 
   (cond [(false? sline) (set! sline line)])
   (cond [(false? scol) (set! scol col)])
@@ -85,7 +120,7 @@
   (define (handle-escape) (void))
   (define (handle-char value)
     (match value
-      [(app char-is-terminator? #t) (complete-string!)]
+      [(app (λ (val) (is-terminator? val port)) #t) (complete-string!)]
       [(app char-is-escape? #t) (handle-escape)]
       [_ (append-cont! value)]))
 
@@ -98,7 +133,7 @@
 ;; Returns a pair with the first value being a token containing the string `opening` and the second
 ;; value being the rest of the tokens scanned.
 (define (string-lex port opening line col callback)
-  (define continue-lex (curry lex-string port callback opening (should-interpolate? opening)))
+  (define continue-lex (curry lex-string port callback (opening->term opening) (should-interpolate? opening)))
   (tok-con line col 'tstring_beg opening continue-lex))
            ;(λ () (lex-string port callback opening (should-interpolate? opening)))))
 
@@ -107,7 +142,7 @@
 ;; Tokenizes the string without creating a token for the string opening.  Returns a list of tokens.
 (define (string-lex-no-open port opening callback)
   (define interpolated? #t)
-  (lex-string port callback opening (should-interpolate? opening)))
+  (lex-string port callback (opening->term opening) (should-interpolate? opening)))
 
 ;; Defines the lexer abbreviation for a string opening.
 ;;
@@ -115,7 +150,12 @@
 (define-lex-abbrev string-opening (:or str-dbl str-single))
 
 ;; Defines the individual lexer abbreviations for string.
-(define-lex-abbrevs [str-dbl (:or #\")] [str-single (:or #\')] [embexpr (:: #\# #\{)])
+(define-lex-abbrevs 
+  [str-dbl (:or #\" per-dbl)] 
+  [str-single (:or #\' per-single)] 
+  [per-dbl (:: "%Q" (:or #\( #\< #\{ #\[))]
+  [per-single (:: "%q" (:or #\( #\< #\{ #\[))]
+  [embexpr (:: #\# #\{)])
 
 ;; (string) -> bool
 ;;
@@ -123,3 +163,21 @@
 (define (should-interpolate? value)
   (or (equal? value "\"")
       (equal? value "%Q{")))
+
+(define (char->string char)
+  (list->string `(,char)))
+
+(define (opening->term opening)
+  (if (or (equal? opening "\"") (equal? opening "\'"))
+      opening
+      (hash-ref punct-pairs-ht (regexp-replace #rx"\\%[Qq]([{<([])" opening "\\1"))))
+
+;; Initializes a hash table of punctuation pairs.
+(define punct-pairs-ht (make-hash))
+
+;; Sets the values of punctuation pairs that we can match against in our punctuation stack.
+(hash-set*! punct-pairs-ht
+            "<" ">"
+            "(" ")"
+            "{" "}"
+            "[" "]")
