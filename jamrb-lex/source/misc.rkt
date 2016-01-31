@@ -6,6 +6,8 @@
 #lang racket
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
+         "keywords.rkt"
+         "punct.rkt"
          "port.rkt"
          "token.rkt")
 
@@ -38,9 +40,15 @@
   ; Internal lexer that should only be called directly at the end of the function.
   (define internal-lex
     (lexer
-     [#\newline (tok-con line col (if first? 'nl 'ignored_nl) lexeme)]
+     [#\newline (handle-newline lexeme)]
      [any-char (callback (rewind))]
      [(eof) '()]))
+
+  (define (handle-newline value)
+    (let* ([ignore? (or (seen-method-with-parens?) (not first?))])
+      (set-seen-def! #f)
+      (set-seen-method-with-parens! #f)
+      (tok-con line col (if ignore? 'ignored_nl 'nl) value)))
 
   ; (number, number, symbol, string) -> '()
   (define (tok-con line col key lexeme)

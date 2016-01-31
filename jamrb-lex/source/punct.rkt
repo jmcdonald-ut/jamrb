@@ -4,13 +4,18 @@
 #lang racket
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
+         "keywords.rkt"
          "port.rkt"
          "token.rkt")
 
 (provide punct
          tokenize-punct!
          embexpr-terminator?
+         seen-method-with-parens?
+         set-seen-method-with-parens!
          punct->symbol)
+
+(define _method-with-parens? #f)
 
 ;; Defines the lexer abbreviation for ruby-specific punctuation.
 (define-lex-abbrev punct (:or #\. #\, #\( #\) #\{ #\} #\[ #\]))
@@ -20,6 +25,19 @@
 ;; Returns the token symbol for the given punctuation.
 (define (punct->symbol value)
   (hash-ref punct-symbol-ht value))
+
+;; () -> bool
+;;
+;; Returns a value indicating whether a method with parens has been declared.
+(define (seen-method-with-parens?)
+  _method-with-parens?)
+
+;; (bool) -> bool
+;;
+;; Sets whether a method with parens has been seen, and returns the bool provided.
+(define (set-seen-method-with-parens! bool)
+  (set! _method-with-parens? bool)
+  bool)
 
 ;; (string) -> bool
 ;;
@@ -56,6 +74,10 @@
   (if (punct-is-open? value)
       (push-punct! value)
       (pop-punct-pair! value))
+
+  (if (has-seen-def?)
+      (set-seen-method-with-parens! #t)
+      (set-seen-method-with-parens! #f))
 
   (tokenize line col (punct->symbol value) value))
 

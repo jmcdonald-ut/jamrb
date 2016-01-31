@@ -55,14 +55,24 @@
 ;; (char) -> bool
 ;;
 ;; Returns a value indicating whether the character is invalid for an id.
-(define (id-char-invalid? val)
+(define (id-char-invalid? val [first? #f])
   (or (and (char>? val (integer->char 0)) (char<? val #\!))
       (and (char>? val #\!) (char<? val #\0))
       (and (char>? val #\9) (char<? val #\?))
-      (eq? val #\@)
+      (and (not first?) (eq? val #\@))
       (and (char>? val #\Z) (char<? val #\_))
       (eq? val #\`)
       (and (char>? val #\z) (char<? val (integer->char 127)))))
+
+;; (string) -> symbol
+;;
+;; Returns a value based on how the identifier starts.
+(define (sym-for-ident string)
+    (cond [(<= (string-length string) 0) (error "invalid syntax")])
+    (match (string-ref string 0)
+      [(app char-upper-case? #t) 'const]
+      [(app (λ (val) (equal? #\@ val)) #t) 'ivar]
+      [_ 'ident]))
 
 ;; (port, fn) -> '()
 ;;
@@ -98,7 +108,7 @@
     ;; Raise an exception if the contents string is empty.
     (cond [(eq? (string-length contents) 0) (error "invalid syntax")])
 
-    (cons (tokenize sline scol 'ident contents) (callback port)))
+    (cons (tokenize sline scol (sym-for-ident contents) contents) (callback port)))
 
   ;; (string) -> '()
   ;;
@@ -107,7 +117,7 @@
   (define (match-id-char memo)
     (match (string->char memo)
       [(app char-whitespace? #t) (complete-id! memo)]
-      [(app id-char-invalid? #t) (complete-id! memo)]
+      [(app (λ (val) (id-char-invalid? val (equal? (string-length contents) 0))) #t) (complete-id! memo)]
       [(app id-char-terminator? #t) (complete-id! memo #f)]
       [_ (append-and-continue! memo)]))
 

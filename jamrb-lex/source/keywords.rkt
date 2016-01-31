@@ -7,22 +7,38 @@
 #lang racket
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
-         "misc.rkt"
          "port.rkt"
          "token.rkt")
 
 (provide keyword
-         lex-keyword)
+         lex-keyword
+         has-seen-def?
+         set-seen-def!)
+
+(define seen-def? #f)
 
 ;; Defines the lexer abbreviation for a ruby keyword.  The list of ruby keywords can be found at
 ;; http://ruby-doc.org/core-2.3.0/doc/keywords_rdoc.html
 (define-lex-abbrevs
-  [keyword (:: (:* whitespace) single-keyword (:+ whitespace))]
+  [keyword (:: single-keyword (:or #\. #\( #\) #\[ #\] whitespace))]
   [single-keyword (:or  "__ENCODING__" "__LINE__" "__FILE__" "BEGIN" "END" "alias" "and"
                         "begin" "break" "case" "class" "def" "defined?" "do" "else" "elsif"
                         "end" "ensure" "false" "for" "if" "in" "module" "nil" "not" "or"
                         "redo" "rescue" "retry" "return" "self" "super" "then" "true" "undef"
                         "unless" "until" "when" "while" "yield")])
+
+;; () -> bool
+;;
+;; Returns a value indicating whether the +def+ keyword has been seen.
+(define (has-seen-def?)
+  seen-def?)
+
+;; (bool) -> bool
+;;
+;; Sets whether or not a +def+ keyword has been seen.  Returns the boolean provided.
+(define (set-seen-def! bool)
+  (set! seen-def? bool)
+  bool)
 
 ;; (port, fn) -> '()
 ;;
@@ -34,10 +50,12 @@
 
   (define internal-lex
     (lexer
-     [newlines (newline-lex (rewind (string-length lexeme)) (λ (port) (lex-keyword port callback)))]
-     [space (tok-con line col 'sp lexeme (λ () (lex-keyword port callback)))]
-     [single-keyword (tok-con line col 'kw lexeme (λ () (lex-keyword port callback)))]
+     [single-keyword (handle-keyword lexeme)]
      [any-char (callback (rewind (string-length lexeme)))]
      [(eof) '()]))
+
+  (define (handle-keyword value)
+    (set-seen-def! (equal? value "def"))
+    (tok-con line col 'kw value (λ () (lex-keyword port callback))))
 
   (internal-lex port))
