@@ -19,7 +19,9 @@
 
 (define tok-con (prepare-tokenizer))
 
-(define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~)) (:+ (:- any-char #\newline))))
+(define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~))
+                                   (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\ #\=))
+                                   (:* (:- any-char #\newline))))
 
 (define (handle-heredoc port callback [heredoc ""])
   (define-values (line col) (watch-port-position! port))
