@@ -7,17 +7,13 @@
          "keywords.rkt"
          "utility.rkt")
 
-(provide punct
-         tokenize-punct!
+(provide tokenize-punct!
          embexpr-terminator?
          seen-method-with-parens?
          set-seen-method-with-parens!
          punct->symbol)
 
 (define _method-with-parens? #f)
-
-;; Defines the lexer abbreviation for ruby-specific punctuation.
-(define-lex-abbrev punct (:or #\. #\, #\( #\) #\{ #\} #\[ #\]))
 
 ;; (string) -> symbol
 ;;

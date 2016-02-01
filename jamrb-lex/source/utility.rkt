@@ -26,7 +26,7 @@
 (define (tokenize-cons line col key value callback)
   (unless (procedure? callback)
     (raise-argument-error 'tokenize-cons "procedure?" callback))
-  
+
   (cons (tokenize line col key value) (callback)))
 
 (define (normalize-token-key key)

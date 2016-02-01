@@ -6,13 +6,11 @@
 #lang racket
 (require parser-tools/lex
          racket/trace
+         "abbrevs.rkt"
          "misc.rkt"
-         "numbers.rkt"
-         "operations.rkt"
          "keywords.rkt"
          "identifiers.rkt"
          "strings.rkt"
-         "symbols.rkt"
          "utility.rkt"
          "punct.rkt")
 
@@ -55,6 +53,13 @@
     (if (embexpr-terminator? lexeme)
         (cons (tokenize line col 'embexpr_end lexeme) (embexpr-callback port))
         (cons (tokenize-punct! line col lexeme) (jamrb-lex port embexpr-callback))))
+
+  (define (handle-sym line col value port callback)
+    (define token (tokenize line col 'symbeg value))
+    (match value
+      [":\"" (cons token (string-lex-no-open port "\"" callback))]
+      [":'" (cons token (string-lex-no-open port "'" callback))]
+      [_ (cons token (callback port))]))
 
   ; Tokenizes the value and continues lexical analysis.
   (define (tok-con line col key lexeme)

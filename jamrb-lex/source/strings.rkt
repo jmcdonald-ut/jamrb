@@ -7,20 +7,15 @@
 (require racket/trace
          parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
+         "abbrevs.rkt"
          "misc.rkt"
          "utility.rkt")
 
 (provide string-lex
          string-lex-no-open
-         string-opening
-         handle-heredoc
-         heredoc-beg)
+         handle-heredoc)
 
 (define tok-con tokenize-cons)
-
-(define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~))
-                                   (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\ #\=))
-                                   (:* (:- any-char #\newline))))
 
 (define (handle-heredoc port callback [heredoc ""])
   (define-values (line col) (watch-port-position! port))
@@ -144,19 +139,6 @@
 (define (string-lex-no-open port opening callback)
   (define interpolated? #t)
   (lex-string port callback (opening->term opening) (should-interpolate? opening)))
-
-;; Defines the lexer abbreviation for a string opening.
-;;
-;; TO-DO: Support %q, %Q.
-(define-lex-abbrev string-opening (:or str-dbl str-single))
-
-;; Defines the individual lexer abbreviations for string.
-(define-lex-abbrevs
-  [str-dbl (:or #\" per-dbl)]
-  [str-single (:or #\' per-single)]
-  [per-dbl (:: "%Q" (:or #\( #\< #\{ #\[))]
-  [per-single (:: "%q" (:or #\( #\< #\{ #\[))]
-  [embexpr (:: #\# #\{)])
 
 ;; (string) -> bool
 ;;
