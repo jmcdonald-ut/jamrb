@@ -7,8 +7,7 @@
 #lang racket
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
-         "port.rkt"
-         "token.rkt")
+         "utility.rkt")
 
 (provide keyword
          lex-keyword
@@ -46,7 +45,6 @@
 (define (lex-keyword port callback)
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
-  (define tok-con (prepare-tokenizer))
 
   (define internal-lex
     (lexer
@@ -56,6 +54,6 @@
 
   (define (handle-keyword value)
     (set-seen-def! (equal? value "def"))
-    (tok-con line col 'kw value (λ () (lex-keyword port callback))))
+    (tokenize-cons line col 'kw value (λ () (lex-keyword port callback))))
 
   (internal-lex port))

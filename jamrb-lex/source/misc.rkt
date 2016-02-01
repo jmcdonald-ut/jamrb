@@ -8,8 +8,7 @@
          (prefix-in : parser-tools/lex-sre)
          "keywords.rkt"
          "punct.rkt"
-         "port.rkt"
-         "token.rkt")
+         "utility.rkt")
 
 (provide comment
          newlines

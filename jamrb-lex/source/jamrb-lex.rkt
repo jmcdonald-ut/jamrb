@@ -13,9 +13,8 @@
          "identifiers.rkt"
          "strings.rkt"
          "symbols.rkt"
-         "port.rkt"
-         "punct.rkt"
-         "token.rkt")
+         "utility.rkt"
+         "punct.rkt")
 
 (provide jamrb-lex)
 
@@ -32,7 +31,6 @@
 (define (jamrb-lex port [embexpr-callback #f])
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
-  (define-lex-abbrev lex-term terminator)
 
   ; Define our lexer.
   (define lex

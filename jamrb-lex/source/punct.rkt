@@ -5,8 +5,7 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          "keywords.rkt"
-         "port.rkt"
-         "token.rkt")
+         "utility.rkt")
 
 (provide punct
          tokenize-punct!

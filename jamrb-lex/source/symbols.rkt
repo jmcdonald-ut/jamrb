@@ -7,7 +7,7 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          "strings.rkt"
-         "token.rkt")
+         "utility.rkt")
 
 (provide symbeg
          handle-sym)

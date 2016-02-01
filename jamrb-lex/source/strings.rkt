@@ -8,8 +8,7 @@
          parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          "misc.rkt"
-         "port.rkt"
-         "token.rkt")
+         "utility.rkt")
 
 (provide string-lex
          string-lex-no-open
@@ -17,7 +16,7 @@
          handle-heredoc
          heredoc-beg)
 
-(define tok-con (prepare-tokenizer))
+(define tok-con tokenize-cons)
 
 (define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~))
                                    (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\ #\=))
@@ -42,14 +41,14 @@
   (define (is-full-terminator? char-string port)
     (define-values (line col) (watch-port-position! port))
     (define rewind (prepare-port-rewinder port line col))
-    
+
     (define len (string-length terminator))
     (define read-len (- len (string-length char-string)))
-    
+
     (define in (string-append char-string (read-string read-len port)))
     (define matches? (equal? in terminator))
     (rewind read-len)
-    
+
     matches?)
 
   (define (is-terminator? char-string port)
@@ -58,7 +57,7 @@
         (if (equal? char-string (char->string (string-ref terminator 0)))
             (is-full-terminator? char-string port)
             #f)))
-  
+
   (define char-is-escape? (curry equal? "\\"))
   (values is-terminator? char-is-escape?))
 
@@ -152,9 +151,9 @@
 (define-lex-abbrev string-opening (:or str-dbl str-single))
 
 ;; Defines the individual lexer abbreviations for string.
-(define-lex-abbrevs 
-  [str-dbl (:or #\" per-dbl)] 
-  [str-single (:or #\' per-single)] 
+(define-lex-abbrevs
+  [str-dbl (:or #\" per-dbl)]
+  [str-single (:or #\' per-single)]
   [per-dbl (:: "%Q" (:or #\( #\< #\{ #\[))]
   [per-single (:: "%q" (:or #\( #\< #\{ #\[))]
   [embexpr (:: #\# #\{)])

@@ -23,9 +23,7 @@
 #lang racket
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
-         racket/trace
-         "port.rkt"
-         "token.rkt")
+         "utility.rkt")
 
 (provide id-start
          id-lex)
