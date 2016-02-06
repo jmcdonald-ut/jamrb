@@ -29,14 +29,14 @@
 
 ;; (port, fn, bool?) -> void
 ;;
-;; Scans the port for one or more newlines.  The first newline is tokenized as a significant, while
-;; subsequent newlines are tokenized as insignificant.  Once all newlines the callback is invoked,
-;; and assumed to continue tokenizing the port.
+;; Scans the port for one or more newlines. The first newline is tokenized as a
+;; significant, while subsequent newlines are tokenized as insignificant. Once
+;; all newlines the callback is invoked, and assumed to continue tokenizing the
+;; port.
 (define (newline-lex port callback [first? #t])
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
 
-  ; Internal lexer that should only be called directly at the end of the function.
   (define internal-lex
     (lexer
      [#\newline (handle-newline lexeme)]
@@ -49,9 +49,9 @@
       (set-seen-method-with-parens! #f)
       (tok-con line col (if ignore? 'ignored_nl 'nl) value)))
 
-  ; (number, number, symbol, string) -> '()
   (define (tok-con line col key lexeme)
-    (cons (tokenize line col key lexeme) (newline-lex port callback #f)))
+    (cons (tokenize line col key lexeme)
+          (newline-lex port callback #f)))
 
   ; Begin lexically analyzing new lines.
   (internal-lex port))

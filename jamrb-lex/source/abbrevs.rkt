@@ -7,12 +7,15 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre))
 
-(provide operation int-literal float-literal symbeg punct heredoc-beg string-opening embexpr)
+(provide operation int-literal float-literal symbeg punct heredoc-beg
+         string-opening embexpr)
 
-(define-lex-abbrev operation (:or #\! #\~ #\+ #\- #\* #\/ #\% #\& #\> #\< #\= #\| #\^
-                                  "**" ">>" "<<" "&&" "||" ".." "..." "<=>" "==" "===" "!="
-                                  "=~" "!~" "+=" "-=" "*=" "/=" "^=" "%=" "**=" ">=" "<="
-                                  "&&=" "||=" "|=" "<<=" ">>=" "-@" "+@" "~@" "!@" "[]" "[]="))
+(define-lex-abbrev operation (:or #\! #\~ #\+ #\- #\* #\/ #\% #\& #\> #\< #\=
+                                  #\| #\^ "**" ">>" "<<" "&&" "||" ".." "..."
+                                  "<=>" "==" "===" "!=" "=~" "!~" "+=" "-="
+                                  "*=" "/=" "^=" "%=" "**=" ">=" "<=" "&&="
+                                  "||=" "|=" "<<=" ">>=" "-@" "+@" "~@" "!@"
+                                  "[]" "[]="))
 
 (define-lex-abbrevs
   [int-literal (:or bin-number oct-number ten-number hex-number)]
@@ -50,7 +53,8 @@
 (define-lex-abbrev punct (:or #\. #\, #\( #\) #\{ #\} #\[ #\]))
 
 (define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~))
-                                   (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\ #\=))
+                                   (:- any-char (:or #\{ #\} #\[ #\] #\<
+                                                     #\> #\( #\space #\=))
                                    (:* (:- any-char #\newline))))
 
 ;; Defines the lexer abbreviation for a string opening.

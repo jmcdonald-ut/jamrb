@@ -30,16 +30,17 @@
 
 ;; Defines the lexer abbreviation of a ruby identifier.
 ;;
-;; NOTE: I may have to literally go through an identifer character by character but I think that
-;; this is an okay attempt.
+;; NOTE: I may have to literally go through an identifer character by character
+;; but I think that this is an okay attempt.
 (define-lex-abbrev id-start (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\))))
 
 ;; (string) -> char
 ;;
-;; Returns a single character string as an actual character.  Raises an error if the string length is
-;; not equal to one.
+;; Returns a single character string as an actual character.  Raises an error if
+;; the string length is not equal to one.
 (define (string->char value)
-  (cond [(not (eq? 1 (string-length value))) (raise-argument-error 'value "string:[1,1]?" value)])
+  (cond [(not (eq? 1 (string-length value)))
+         (raise-argument-error 'value "string:[1,1]?" value)])
   (first (string->list value)))
 
 ;; (char) -> bool
@@ -74,8 +75,9 @@
 
 ;; (port, fn) -> '()
 ;;
-;; Processes and tokenizes an identifier.  Once tokenization is complete it will invoke the callback
-;; with the port as an argument.  The port should be rewound to the first character.
+;; Processes and tokenizes an identifier.  Once tokenization is complete it will
+;; invoke the callback with the port as an argument.  The port should be rewound
+;; to the first character.
 (define (id-lex port callback [contents ""] [sline #f] [scol #f])
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
@@ -97,7 +99,8 @@
 
   ;; (string, bool?) -> '()
   ;;
-  ;; Completes the identifier and continues on tokenizing by passing control back to the caller.
+  ;; Completes the identifier and continues on tokenizing by passing control
+  ;; back to the caller.
   (define (complete-id! memo [should-unget #t])
     (if should-unget
         (rewind (string-length memo))
@@ -106,18 +109,22 @@
     ;; Raise an exception if the contents string is empty.
     (cond [(eq? (string-length contents) 0) (error "invalid syntax")])
 
-    (cons (tokenize sline scol (sym-for-ident contents) contents) (callback port)))
+    (cons (tokenize sline scol (sym-for-ident contents) contents)
+          (callback port)))
 
   ;; (string) -> '()
   ;;
-  ;; Inspects the string (which should simply be a character) and decides whether to keep feeding in
-  ;; characters or complete the identifier token.
+  ;; Inspects the string (which should simply be a character) and decides
+  ;; whether to keep feeding in characters or complete the identifier token.
   (define (match-id-char memo)
     (match (string->char memo)
       [(app char-whitespace? #t) (complete-id! memo)]
-      [(app (λ (val) (id-char-invalid? val (equal? (string-length contents) 0))) #t) (complete-id! memo)]
+      [(app (λ (val)
+              (id-char-invalid? val (equal? (string-length contents) 0))) #t)
+       (complete-id! memo)]
       [(app id-char-terminator? #t) (complete-id! memo #f)]
       [_ (append-and-continue! memo)]))
 
-  (define lex (lexer [any-char (match-id-char lexeme)] [(eof) (complete-id! "")]))
+  (define lex (lexer [any-char (match-id-char lexeme)]
+                     [(eof) (complete-id! "")]))
   (lex port))

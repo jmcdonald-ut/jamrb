@@ -30,7 +30,8 @@
   (cons (tokenize line col key value) (callback)))
 
 (define (normalize-token-key key)
-  (unless (symbol? key) (raise-argument-error 'normalize-token-key "symbol?" key))
+  (unless (symbol? key)
+    (raise-argument-error 'normalize-token-key "symbol?" key))
   (string->symbol (string-append "on_" (symbol->string key))))
 
 ;;
@@ -56,7 +57,8 @@
   (unless (exact-integer? col)
     (raise-argument-error 'unget-with-position! "exact-integer?" col))
   (unless (exact-positive-integer? count)
-    (raise-argument-error 'unget-with-position! "exact-positive-integer?" count))
+    (raise-argument-error
+     'unget-with-position! "exact-positive-integer?" count))
 
   (if (> (file-position port) 0)
       (begin
@@ -73,7 +75,8 @@
   (unless (port? port)
     (raise-argument-error 'preapre-port-rewinder "port?" port))
   (unless (exact-positive-integer? line)
-    (raise-argument-error 'prepare-port-rewinder "exact-positive-integer?" line))
+    (raise-argument-error
+     'prepare-port-rewinder "exact-positive-integer?" line))
   (unless (exact-integer? col)
     (raise-argument-error 'prepare-port-rewinder "exact-integer?" col))
 

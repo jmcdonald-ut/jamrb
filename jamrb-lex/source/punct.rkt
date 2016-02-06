@@ -29,15 +29,17 @@
 
 ;; (bool) -> bool
 ;;
-;; Sets whether a method with parens has been seen, and returns the bool provided.
+;; Sets whether a method with parens has been seen, and returns the bool
+;; provided.
 (define (set-seen-method-with-parens! bool)
   (set! _method-with-parens? bool)
   bool)
 
 ;; (string) -> bool
 ;;
-;; Returns a value indicating whether the value is an embedded expression terminator.  A value is an
-;; embedded expression terminator if it is "}" and there is no matching "{" at the top of the stack.
+;; Returns a value indicating whether the value is an embedded expression
+;; terminator.  A value is an embedded expression terminator if it is "}" and
+;; there is no matching "{" at the top of the stack.
 (define (embexpr-terminator? value)
   (and (equal? value "}")
        (or (not (punct-stack-any?)) (not (equal? (peek-punct) "{")))))
@@ -50,7 +52,8 @@
 
 ;; (string) -> bool
 ;;
-;; Returns a value indicating whether the value should cause a push or pop on the stack.
+;; Returns a value indicating whether the value should cause a push or pop on
+;; the stack.
 (define (punct-is-stackable? value)
   (not (or (equal? value ".") (equal? value ","))))
 
@@ -64,7 +67,8 @@
 
 ;; (number, number, string) -> '()
 ;;
-;; Returns the token after either pushing the value to the stack, or popping the stack.
+;; Returns the token after either pushing the value to the stack, or popping the
+;; stack.
 (define (tokenize-stackable-punct! line col value)
   (if (punct-is-open? value)
       (push-punct! value)
@@ -93,7 +97,8 @@
 ;; Initializes a hash table of punctuation pairs.
 (define punct-pairs-ht (make-hash))
 
-;; Sets the values of punctuation pairs that we can match against in our punctuation stack.
+;; Sets the values of punctuation pairs that we can match against in our
+;; punctuation stack.
 (hash-set*! punct-pairs-ht
             "(" ")"
             "{" "}"
@@ -130,12 +135,13 @@
 
 ;; (string) -> string
 ;;
-;; Pops the stack and returns the result.  Raises an error if the popped value is not a valid pair
-;; with `close-value`.
+;; Pops the stack and returns the result.  Raises an error if the popped value
+;; is not a valid pair with `close-value`.
 (define (pop-punct-pair! close-value)
   (define return-val (car punct-stack))
   (cond [(not (equal? (hash-ref punct-pairs-ht return-val) close-value))
-         (raise-syntax-error 'unexpected-token (format "Expecting ~a" return-val))])
+         (raise-syntax-error 'unexpected-token
+                             (format "Expecting ~a" return-val))])
 
   (set! punct-stack (cdr punct-stack))
   return-val)

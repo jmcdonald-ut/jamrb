@@ -21,17 +21,20 @@
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
   (define (fill-contents port)
-    (lex-string port callback (regexp-replace #rx"<<[-~]?(.*)" heredoc "\\1") #t))
+    (lex-string port callback
+                (regexp-replace #rx"<<[-~]?(.*)" heredoc "\\1") #t))
 
   (define internal-lex
     (lexer
-     [heredoc-beg (tok-con line col 'heredoc_beg lexeme (λ () (handle-heredoc port callback lexeme)))]
+     [heredoc-beg (tok-con line col 'heredoc_beg lexeme
+                           (λ () (handle-heredoc port callback lexeme)))]
      [newlines (newline-lex (rewind (string-length lexeme)) fill-contents)]))
   (internal-lex port))
 
 ;; (string) -> '():values
 ;;
-;; Taking the terminator, returns a collection of useful values for lexing strings.
+;; Taking the terminator, returns a collection of useful values for lexing
+;; strings.
 (define (prepare-string-lex-fns terminator)
   (define (is-full-terminator? char-string port)
     (define-values (line col) (watch-port-position! port))
@@ -67,11 +70,12 @@
 
 ;; (port, fn, string, string?, number?, number?) -> '()
 ;;
-;; Tokenizes string contents, the string terminator, and embedded expressions within the string
-;; contents.
-(define (lex-string port callback terminator interpolated? [contents ""] [sline #f] [scol #f])
+;; Tokenizes string contents, the string terminator, and embedded expressions
+;; within the string contents.
+(define (lex-string port fn term interp? [contents ""] [sline #f] [scol #f])
   (define-values (line col) (watch-port-position! port))
-  (define-values (is-terminator? char-is-escape?) (prepare-string-lex-fns terminator))
+  (define-values (is-terminator? char-is-escape?)
+    (prepare-string-lex-fns term))
 
   (cond [(false? sline) (set! sline line)])
   (cond [(false? scol) (set! scol col)])
@@ -79,20 +83,22 @@
   (define (handle-embexpr port value)
     (set! value (string-append "\\" value))
     (define (lex-embexpr)
-      (callback port continue-string))
+      (fn port continue-string))
     (define (continue-string port)
-      (lex-string port callback terminator interpolated?))
+      (lex-string port fn term interp?))
 
-    (if interpolated?
-        (tokenize-contents! (λ () (tok-con line col 'embexpr_beg value lex-embexpr)))
+    (if interp?
+        (tokenize-contents!
+         (λ () (tok-con line col 'embexpr_beg value lex-embexpr)))
         (append-cont! value)))
 
   ;; (string) -> '()
   ;;
-  ;; Appends the character to `contents` and continues to lex, returning the result of lexing.
+  ;; Appends the character to `contents` and continues to lex, returning the
+  ;; result of lexing.
   (define (append-cont! value)
     (set! contents (string-append contents value))
-    (lex-string port callback terminator interpolated? contents sline scol))
+    (lex-string port fn term interp? contents sline scol))
 
   (define (tokenize-contents! callback)
     (if (> (string-length contents) 0)
@@ -101,13 +107,13 @@
 
   ;; () -> '()
   ;;
-  ;; Completes the string by creating the string content and string end tokens, and passing the port
-  ;; back to the supplied callback.
+  ;; Completes the string by creating the string content and string end tokens,
+  ;; and passing the port back to the supplied callback.
   (define (complete-string!)
     (define (call-home)
-      (callback port))
+      (fn port))
     (define (tokenize-terminator)
-      (tok-con line col 'tstring_end terminator call-home))
+      (tok-con line col 'tstring_end term call-home))
 
     (if (> (string-length contents) 0)
         (tok-con sline scol 'tstring_content contents tokenize-terminator)
@@ -126,19 +132,21 @@
 
 ;; (port, string, fn) -> '()
 ;;
-;; Returns a pair with the first value being a token containing the string `opening` and the second
-;; value being the rest of the tokens scanned.
+;; Returns a pair with the first value being a token containing the string
+;; `opening` and the second value being the rest of the tokens scanned.
 (define (string-lex port opening line col callback)
-  (define continue-lex (curry lex-string port callback (opening->term opening) (should-interpolate? opening)))
+  (define continue-lex (curry lex-string port callback (opening->term opening)
+                              (should-interpolate? opening)))
   (tok-con line col 'tstring_beg opening continue-lex))
-           ;(λ () (lex-string port callback opening (should-interpolate? opening)))))
 
 ;; (port, string, fn) -> '()
 ;;
-;; Tokenizes the string without creating a token for the string opening.  Returns a list of tokens.
+;; Tokenizes the string without creating a token for the string opening.
+;; Returns a list of tokens.
 (define (string-lex-no-open port opening callback)
   (define interpolated? #t)
-  (lex-string port callback (opening->term opening) (should-interpolate? opening)))
+  (lex-string port callback (opening->term opening)
+              (should-interpolate? opening)))
 
 ;; (string) -> bool
 ;;
@@ -153,12 +161,14 @@
 (define (opening->term opening)
   (if (or (equal? opening "\"") (equal? opening "\'"))
       opening
-      (hash-ref punct-pairs-ht (regexp-replace #rx"\\%[Qq]([{<([])" opening "\\1"))))
+      (hash-ref punct-pairs-ht
+                (regexp-replace #rx"\\%[Qq]([{<([])" opening "\\1"))))
 
 ;; Initializes a hash table of punctuation pairs.
 (define punct-pairs-ht (make-hash))
 
-;; Sets the values of punctuation pairs that we can match against in our punctuation stack.
+;; Sets the values of punctuation pairs that we can match against in our
+;; punctuation stack.
 (hash-set*! punct-pairs-ht
             "<" ">"
             "(" ")"
