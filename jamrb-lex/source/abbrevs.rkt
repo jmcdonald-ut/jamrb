@@ -7,8 +7,18 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre))
 
-(provide operation int-literal float-literal symbeg punct heredoc-beg
-         string-opening embexpr)
+(provide comment newlines space embexpr-end operation id-start int-literal
+         float-literal symbeg punct heredoc-beg string-opening embexpr)
+
+(define-lex-abbrev comment (:: (:+ "#")
+                               (:* (:- any-char #\newline))
+                               (:? #\newline)))
+
+(define-lex-abbrev newlines (:+ #\newline))
+
+(define-lex-abbrev space (:+ (:- whitespace #\newline)))
+
+(define-lex-abbrev embexpr-end (:: #\}))
 
 (define-lex-abbrev operation (:or #\! #\~ #\+ #\- #\* #\/ #\% #\& #\> #\< #\=
                                   #\| #\^ "**" ">>" "<<" "&&" "||" ".." "..."
@@ -16,6 +26,8 @@
                                   "*=" "/=" "^=" "%=" "**=" ">=" "<=" "&&="
                                   "||=" "|=" "<<=" ">>=" "-@" "+@" "~@" "!@"
                                   "[]" "[]="))
+
+(define-lex-abbrev id-start (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\))))
 
 (define-lex-abbrevs
   [int-literal (:or bin-number oct-number ten-number hex-number)]

@@ -7,9 +7,8 @@
 (require parser-tools/lex
          racket/trace
          "abbrevs.rkt"
-         "misc.rkt"
+         "lexers.rkt"
          "keywords.rkt"
-         "identifiers.rkt"
          "strings.rkt"
          "utility.rkt"
          "punct.rkt")

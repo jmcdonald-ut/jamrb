@@ -8,7 +8,7 @@
          parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
          "abbrevs.rkt"
-         "misc.rkt"
+         "lexers.rkt"
          "utility.rkt")
 
 (provide string-lex

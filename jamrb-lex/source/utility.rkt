@@ -78,3 +78,13 @@
 
 (define (prepare-port-rewinder port line col)
   (curry unget-with-position! port line col))
+
+
+;;
+;; Type Utilities
+;;
+
+(provide (contract-out [string->char (-> string? char?)]))
+
+(define (string->char str)
+  (car (string->list str)))
