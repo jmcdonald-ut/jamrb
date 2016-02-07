@@ -47,9 +47,12 @@
 (define punct-symbols (make-hash))
 
 (hash-set*! punct-pairs
+            "<" ">"
             "(" ")"
             "{" "}"
-            "[" "]")
+            "[" "]"
+            "'" "'"
+            "\"" "\"")
 
 (hash-set*! punct-symbols
             "." 'period
@@ -131,6 +134,31 @@
 (define (embexpr-terminator? punct)
   (and (equal? punct "}")
        (or (not (any-punct?)) (not (equal? (peek-punct) "{")))))
+
+
+;;
+;; Strings
+;;
+
+(provide (contract-out [opening->term (-> string? string?)]))
+
+(define (opening->term opening)
+  (if (punct-is-open? opening)
+      (punct->close opening)
+      (punct->close (regexp-replace #rx"\\%[Qq]([{<([])" opening "\\1"))))
+
+
+(provide (contract-out [interpolated? (-> string? boolean?)]))
+
+(define (interpolated? opening)
+  (or (equal? opening "\"")
+      (string-prefix? opening "%Q")))
+
+
+(provide (contract-out [char->string (-> char? string?)]))
+
+(define (char->string ch)
+  (list->string `(,ch)))
 
 
 ;;

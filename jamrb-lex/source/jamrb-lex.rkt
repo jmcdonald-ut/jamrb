@@ -8,7 +8,6 @@
          racket/trace
          "abbrevs.rkt"
          "lexers.rkt"
-         "strings.rkt"
          "utility.rkt"
          "state.rkt")
 
@@ -61,6 +60,24 @@
       [":\"" (cons token (string-lex-no-open port "\"" callback))]
       [":'" (cons token (string-lex-no-open port "'" callback))]
       [_ (cons token (callback port))]))
+
+  (define (handle-heredoc port callback [heredoc ""])
+    (define-values (line col) (watch-port-position! port))
+    (define rewind (prepare-port-rewinder port line col))
+    (define (fill-contents port)
+      (define terminator (regexp-replace #rx"<<[-~]?(.*)" heredoc "\\1"))
+      (lex-string port callback terminator #t))
+
+    (define (call-self-with val)
+      (λ () (handle-heredoc port callback val)))
+
+    (define internal-lex
+      (lexer
+       [heredoc-beg (tokenize-cons line col 'heredoc_beg lexeme
+                                   (call-self-with lexeme))]
+       [newlines (newline-lex (rewind (string-length lexeme)) fill-contents)]))
+
+    (internal-lex port))
 
   ; Tokenizes the value and continues lexical analysis.
   (define (tok-con line col key lexeme)

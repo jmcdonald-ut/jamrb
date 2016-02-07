@@ -7,7 +7,12 @@
 (require parser-tools/lex (prefix-in : parser-tools/lex-sre)
          "abbrevs.rkt" "utility.rkt" "state.rkt")
 
-(provide newline-lex id-lex lex-keyword)
+
+;;
+;; Newlines
+;;
+
+(provide newline-lex)
 
 (define (newline-lex port callback [first? #t])
   (define-values (line col) (watch-port-position! port))
@@ -32,11 +37,12 @@
   (internal-lex port))
 
 
-;; (port, fn) -> '()
 ;;
-;; Processes and tokenizes an identifier.  Once tokenization is complete it will
-;; invoke the callback with the port as an argument.  The port should be rewound
-;; to the first character.
+;; Identifiers
+;;
+
+(provide id-lex)
+
 (define (id-lex port callback [contents ""] [sline #f] [scol #f])
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
@@ -88,6 +94,13 @@
                      [(eof) (complete-id! "")]))
   (lex port))
 
+
+;;
+;; Keywords
+;;
+
+(provide lex-keyword)
+
 (define (lex-keyword port callback)
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
@@ -103,3 +116,114 @@
     (tokenize-cons line col 'kw value (λ () (lex-keyword port callback))))
 
   (internal-lex port))
+
+
+;;
+;; Strings
+;;
+
+(define (prepare-lexer port callback [interpolate null])
+  (lexer
+   [embexpr (interpolate port lexeme)]
+   [any-char (callback lexeme)]
+   [(eof) '()]))
+
+
+(define (prepare-string-lex-fns terminator)
+  (define (is-full-terminator? char-string port)
+    (define-values (line col) (watch-port-position! port))
+    (define rewind (prepare-port-rewinder port line col))
+
+    (define len (string-length terminator))
+    (define read-len (- len (string-length char-string)))
+
+    (define in (string-append char-string (read-string read-len port)))
+    (define matches? (equal? in terminator))
+    (rewind read-len)
+
+    matches?)
+
+  (define (is-terminator? char-string port)
+    (if (equal? char-string terminator)
+        #t
+        (if (equal? char-string (char->string (string-ref terminator 0)))
+            (is-full-terminator? char-string port)
+            #f)))
+
+  (define char-is-escape? (curry equal? "\\"))
+  (values is-terminator? char-is-escape?))
+
+
+(provide lex-string)
+
+(define (lex-string port fn term interp? [contents ""] [sline #f] [scol #f])
+  (define-values (line col) (watch-port-position! port))
+  (define-values (is-terminator? char-is-escape?)
+    (prepare-string-lex-fns term))
+
+  (cond [(false? sline) (set! sline line)])
+  (cond [(false? scol) (set! scol col)])
+
+  (define (handle-embexpr port value)
+    (set! value (string-append "\\" value))
+    (define (lex-embexpr)
+      (fn port continue-string))
+    (define (continue-string port)
+      (lex-string port fn term interp?))
+
+    (if interp?
+        (tokenize-contents!
+         (λ () (tokenize-cons line col 'embexpr_beg value lex-embexpr)))
+        (append-cont! value)))
+
+  ;; (string) -> '()
+  ;;
+  ;; Appends the character to `contents` and continues to lex, returning the
+  ;; result of lexing.
+  (define (append-cont! value)
+    (set! contents (string-append contents value))
+    (lex-string port fn term interp? contents sline scol))
+
+  (define (tokenize-contents! callback)
+    (if (> (string-length contents) 0)
+        (tokenize-cons sline scol 'tstring_content contents callback)
+        (callback)))
+
+  ;; () -> '()
+  ;;
+  ;; Completes the string by creating the string content and string end tokens,
+  ;; and passing the port back to the supplied callback.
+  (define (complete-string!)
+    (define (call-home)
+      (fn port))
+    (define (tokenize-terminator)
+      (tokenize-cons line col 'tstring_end term call-home))
+
+    (if (> (string-length contents) 0)
+        (tokenize-cons sline scol 'tstring_content contents tokenize-terminator)
+        (tokenize-terminator)))
+
+  (define (handle-escape) (void))
+  (define (handle-char value)
+    (match value
+      [(app (λ (val) (is-terminator? val port)) #t) (complete-string!)]
+      [(app char-is-escape? #t) (handle-escape)]
+      [_ (append-cont! value)]))
+
+  (define internal-lex (prepare-lexer port handle-char handle-embexpr))
+  (internal-lex port))
+
+
+(provide string-lex)
+
+(define (string-lex port opening line col callback)
+  (define continue-lex (curry lex-string port callback (opening->term opening)
+                              (interpolated? opening)))
+  (tokenize-cons line col 'tstring_beg opening continue-lex))
+
+
+(provide string-lex-no-open)
+
+(define (string-lex-no-open port opening callback)
+  (lex-string port callback (opening->term opening)
+              (interpolated? opening)))
