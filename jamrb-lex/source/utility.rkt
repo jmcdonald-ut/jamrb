@@ -4,7 +4,7 @@
 ;;
 ;; By Jonathon McDonald
 #lang racket
-
+(require "state.rkt")
 
 ;;
 ;; Token Utilities
@@ -32,6 +32,29 @@
 
 (define (normalize-token-key key)
   (string->symbol (string-append "on_" (symbol->string key))))
+
+
+(provide
+ (contract-out
+  [tokenize-punct! (-> exact-integer? exact-integer? string? list?)]))
+
+(define (tokenize-punct! line col value)
+  (if (punct-is-stackable? value)
+      (tokenize-stackable-punct! line col value)
+      (tokenize line col (punct->symbol value) value)))
+
+
+(provide
+ (contract-out
+  [tokenize-stackable-punct! (-> exact-integer? exact-integer? string? list?)]))
+
+(define (tokenize-stackable-punct! line col value)
+  (if (punct-is-open? value)
+      (push-punct! value)
+      (pop-punct-pair! value))
+
+  (track-def-with-parens! (def-tracked?))
+  (tokenize line col (punct->symbol value) value))
 
 
 ;;

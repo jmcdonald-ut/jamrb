@@ -5,7 +5,7 @@
 ;; By Jonathon McDonald
 #lang racket
 (require parser-tools/lex (prefix-in : parser-tools/lex-sre)
-         "abbrevs.rkt" "utility.rkt" "punct.rkt" "state.rkt")
+         "abbrevs.rkt" "utility.rkt" "state.rkt")
 
 (provide newline-lex id-lex lex-keyword)
 

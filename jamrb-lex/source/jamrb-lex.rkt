@@ -10,7 +10,7 @@
          "lexers.rkt"
          "strings.rkt"
          "utility.rkt"
-         "punct.rkt")
+         "state.rkt")
 
 (provide jamrb-lex)
 
