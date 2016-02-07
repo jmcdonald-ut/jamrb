@@ -57,6 +57,15 @@
   (tokenize line col (punct->symbol value) value))
 
 
+(provide (contract-out [tokenize-string-contents! (-> procedure? list?)]))
+
+(define (tokenize-string-contents! callback)
+  (define-values (contents sline scol) (reset-string-contents!))
+  (if (> (string-length contents) 0)
+      (tokenize-cons sline scol 'tstring_content contents callback)
+      (callback)))
+
+
 ;;
 ;; Port Utilities
 ;;

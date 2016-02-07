@@ -205,3 +205,68 @@
   (hash-set*! method-tracking
               'spotted? spotted?
               'with-parens? with-parens?))
+
+
+;;
+;; Strings
+;;
+
+(define active-contents "")
+(define active-sline -1)
+(define active-scol -1)
+(define active-interpolated? #f)
+
+
+(provide (contract-out [string-contents (-> string?)]))
+
+(define (string-contents)
+  active-contents)
+
+
+(provide
+ (contract-out
+  [string-content-values (-> (values string? exact-integer? exact-integer?))]))
+
+(define (string-content-values)
+  (values active-contents active-sline active-scol))
+
+
+(provide
+ (contract-out
+  [start-string! (-> exact-integer? exact-integer? boolean? any/c)]))
+
+(define (start-string! line col interpolated?)
+  (set!-values (active-sline active-scol active-interpolated?)
+               (values line col interpolated?)))
+
+
+(provide
+ (contract-out
+  [maybe-start-string! (-> exact-integer? exact-integer? boolean? any/c)]))
+
+(define (maybe-start-string! line col interpolated?)
+  (cond [(or (eq? active-sline -1) (eq? active-scol -1))
+         (start-string! line col interpolated?)]))
+
+
+(provide
+ (contract-out
+  [reset-string-contents! (-> (values string? exact-integer? exact-integer?))]))
+
+(define (reset-string-contents!)
+  (define-values (contents line col) (string-content-values))
+  (set!-values (active-contents active-sline active-scol) (values "" -1 -1))
+  (values contents line col))
+
+
+(provide (contract-out (add-string-contents! (-> string? procedure? any/c))))
+
+(define (add-string-contents! new-contents callback)
+  (set! active-contents (string-append active-contents new-contents))
+  (callback))
+
+
+(provide (contract-out (string-interpolated? (-> boolean?))))
+
+(define (string-interpolated?)
+  active-interpolated?)
