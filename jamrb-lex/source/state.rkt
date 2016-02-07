@@ -36,3 +36,47 @@
       (and (char>? value #\Z) (char<? value #\_))
       (eq? value #\`)
       (and (char>? value #\z) (char<? value (integer->char 127)))))
+
+
+;;
+;; Tracking
+;;
+
+(define method-tracking (make-hash))
+(hash-set*! method-tracking
+            'spotted? #f
+            'with-parens? #f)
+
+(provide (contract-out [track-def! (->* () (boolean?) boolean?)]))
+
+(define (track-def! [spotted? #t])
+  (hash-set! method-tracking 'spotted? spotted?)
+  spotted?)
+
+
+(provide (contract-out [def-tracked? (-> boolean?)]))
+
+(define (def-tracked?)
+  (hash-ref method-tracking 'spotted?))
+
+
+(provide (contract-out [def-tracked-with-parens? (-> boolean?)]))
+
+(define (def-tracked-with-parens?)
+  (hash-ref method-tracking 'with-parens?))
+
+
+(provide (contract-out [track-def-with-parens! (->* () (boolean?) boolean?)]))
+
+(define (track-def-with-parens! [with-parens? #f])
+  (hash-set! method-tracking 'with-parens? with-parens?)
+  with-parens?)
+
+
+(provide
+ (contract-out [reset-method-tracking! (->* () (boolean? boolean?) any/c)]))
+
+(define (reset-method-tracking! [spotted? #f] [with-parens? #f])
+  (hash-set*! method-tracking
+              'spotted? spotted?
+              'with-parens? with-parens?))

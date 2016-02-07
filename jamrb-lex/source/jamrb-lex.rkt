@@ -8,7 +8,6 @@
          racket/trace
          "abbrevs.rkt"
          "lexers.rkt"
-         "keywords.rkt"
          "strings.rkt"
          "utility.rkt"
          "punct.rkt")

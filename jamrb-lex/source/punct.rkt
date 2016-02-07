@@ -4,36 +4,18 @@
 #lang racket
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre)
-         "keywords.rkt"
-         "utility.rkt")
+         "utility.rkt"
+         "state.rkt")
 
 (provide tokenize-punct!
          embexpr-terminator?
-         seen-method-with-parens?
-         set-seen-method-with-parens!
          punct->symbol)
-
-(define _method-with-parens? #f)
 
 ;; (string) -> symbol
 ;;
 ;; Returns the token symbol for the given punctuation.
 (define (punct->symbol value)
   (hash-ref punct-symbol-ht value))
-
-;; () -> bool
-;;
-;; Returns a value indicating whether a method with parens has been declared.
-(define (seen-method-with-parens?)
-  _method-with-parens?)
-
-;; (bool) -> bool
-;;
-;; Sets whether a method with parens has been seen, and returns the bool
-;; provided.
-(define (set-seen-method-with-parens! bool)
-  (set! _method-with-parens? bool)
-  bool)
 
 ;; (string) -> bool
 ;;
@@ -74,10 +56,7 @@
       (push-punct! value)
       (pop-punct-pair! value))
 
-  (if (has-seen-def?)
-      (set-seen-method-with-parens! #t)
-      (set-seen-method-with-parens! #f))
-
+  (track-def-with-parens! (def-tracked?))
   (tokenize line col (punct->symbol value) value))
 
 ;; Initializes a hash table which will contain the punctuation.

@@ -5,9 +5,9 @@
 ;; By Jonathon McDonald
 #lang racket
 (require parser-tools/lex (prefix-in : parser-tools/lex-sre)
-         "utility.rkt" "punct.rkt" "keywords.rkt" "state.rkt")
+         "abbrevs.rkt" "utility.rkt" "punct.rkt" "state.rkt")
 
-(provide newline-lex id-lex)
+(provide newline-lex id-lex lex-keyword)
 
 (define (newline-lex port callback [first? #t])
   (define-values (line col) (watch-port-position! port))
@@ -20,9 +20,8 @@
      [(eof) '()]))
 
   (define (handle-newline value)
-    (let* ([ignore? (or (seen-method-with-parens?) (not first?))])
-      (set-seen-def! #f)
-      (set-seen-method-with-parens! #f)
+    (let* ([ignore? (or (def-tracked-with-parens?) (not first?))])
+      (reset-method-tracking!)
       (tok-con line col (if ignore? 'ignored_nl 'nl) value)))
 
   (define (tok-con line col key lexeme)
@@ -88,3 +87,19 @@
   (define lex (lexer [any-char (match-id-char lexeme)]
                      [(eof) (complete-id! "")]))
   (lex port))
+
+(define (lex-keyword port callback)
+  (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
+
+  (define internal-lex
+    (lexer
+     [single-keyword (handle-keyword lexeme)]
+     [any-char (callback (rewind (string-length lexeme)))]
+     [(eof) '()]))
+
+  (define (handle-keyword value)
+    (track-def! (equal? value "def"))
+    (tokenize-cons line col 'kw value (λ () (lex-keyword port callback))))
+
+  (internal-lex port))
