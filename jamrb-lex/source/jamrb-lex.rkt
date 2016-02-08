@@ -105,7 +105,7 @@
 (set! input (open-input-string (port->string input)))
 
 ;; Define a list of tokens as the result from invoking `jamrb-lex` on `input`.
-(define tokens (jamrb-lex input))
+(define noop (jamrb-lex input))
 
 ;; Write the list of tokens to std-out.
-(pretty-write tokens)
+(pretty-write (lexed-tokens))

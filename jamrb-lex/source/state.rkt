@@ -6,6 +6,42 @@
 #lang racket
 
 ;;
+;; Tokens
+;;
+
+(define internal-lexed-tokens '())
+
+
+(provide (contract-out [add-lexed-token! (-> list? list?)]))
+
+(define (add-lexed-token! token)
+  ; Note: Technically a token is simply a list, formatted something like:
+  ;   `(Token ((line, col) key value))
+  (set! internal-lexed-tokens
+        (append internal-lexed-tokens `(,token)))
+  token)
+
+
+(provide (contract-out [lexed-tokens (-> list?)]))
+
+(define (lexed-tokens)
+  internal-lexed-tokens)
+
+
+(provide (contract-out [last-non-space-token (-> list?)]))
+
+(define (last-non-space-token)
+  (define not-space? (negate (compose (curry equal? 'on_sp) token-type)))
+  (findf not-space? (reverse (lexed-tokens))))
+
+
+(provide (contract-out [token-type (-> list? symbol?)]))
+
+(define (token-type token)
+  (second (second token)))
+
+
+;;
 ;; Identifiers
 ;;
 
@@ -14,6 +50,7 @@
 (define (id-char-terminator? value)
   (match value
     [(or #\! #\?) #t]
+    [(and #\: (app (λ (val) (any-punct?)) #t)) #t]
     [_ #f]))
 
 
@@ -23,6 +60,7 @@
   (match (string-ref value 0)
     [(app char-upper-case? #t) 'const]
     [(app (λ (val) (equal? #\@ val)) #t) 'ivar]
+    [(app (λ (val) (string-suffix? value ":")) #t) 'label]
     [_ 'ident]))
 
 
@@ -31,7 +69,8 @@
 (define (id-char-invalid? value [first? #f])
   (or (and (char>? value (integer->char 0)) (char<? value #\!))
       (and (char>? value #\!) (char<? value #\0))
-      (and (char>? value #\9) (char<? value #\?))
+      (and (char>? value #\9) (char<? value #\:))
+      (and (char>? value #\:) (char<? value #\?))
       (and (not first?) (eq? value #\@))
       (and (char>? value #\Z) (char<? value #\_))
       (eq? value #\`)

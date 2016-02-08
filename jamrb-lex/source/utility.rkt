@@ -15,7 +15,7 @@
   [tokenize (->* (exact-integer? exact-integer? symbol? string?) list?)]))
 
 (define (tokenize line col key value)
-  `(Token ((,line ,col) ,(normalize-token-key key) ,value)))
+  (add-lexed-token! `(Token ((,line ,col) ,(normalize-token-key key) ,value))))
 
 
 (provide

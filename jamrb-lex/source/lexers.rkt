@@ -25,7 +25,7 @@
      [(eof) '()]))
 
   (define (handle-newline value)
-    (let* ([ignore? (or (def-tracked-with-parens?) (not first?))])
+    (let* ([ignore? (or (def-tracked-with-parens?) (not first?) (any-punct?))])
       (reset-method-tracking!)
       (tok-con line col (if ignore? 'ignored_nl 'nl) value)))
 
