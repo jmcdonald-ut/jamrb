@@ -104,10 +104,12 @@
 ;; Heredocs
 (provide heredoc-beg)
 
-(define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~))
-                                   (:- any-char (:or #\{ #\} #\[ #\] #\<
-                                                     #\> #\( #\space #\=))
-                                   (:* (:- any-char #\newline))))
+(define-lex-abbrevs
+  [heredoc-beg (:: hdoc-prefix hdoc-id (:? hdoc-quotes) #\newline)]
+  [hdoc-id (:+ (:- any-char whitespace punct))]
+  [hdoc-prefix (:: "<<" (:? hdoc-indent) (:? hdoc-quotes))]
+  [hdoc-indent (:or "-" "~")]
+  [hdoc-quotes (:or #\' #\" #\`)])
 
 
 ;; Strings
