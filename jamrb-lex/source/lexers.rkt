@@ -25,7 +25,14 @@
      [(eof) '()]))
 
   (define (handle-newline value)
-    (let* ([ignore? (or (def-tracked-with-parens?) (not first?) (any-punct?))])
+    (let* ([ignore? (or (def-tracked-with-parens?)
+                        (not first?)
+                        (last-non-space-token-eq? "|")
+                        (last-non-space-token-eq? "do")
+                        (last-non-space-token-is? 'on_lbrace)
+                        (last-non-space-token-is? 'on_lbracket)
+                        (last-non-space-token-is? 'on_lparen)
+                        (last-non-space-token-is? 'on_comma))])
       (reset-method-tracking!)
       (tok-con line col (if ignore? 'ignored_nl 'nl) value)))
 
@@ -34,6 +41,24 @@
           (newline-lex port callback #f)))
 
   ; Begin lexically analyzing new lines.
+  (internal-lex port))
+
+
+;;
+;; Ops
+;;
+
+(provide unary-op-lex)
+
+(define (unary-op-lex port callback)
+  (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
+
+  (define internal-lex
+    (lexer
+     [single-unary-op (tokenize-cons line col 'op lexeme
+                                     (λ () (callback port)))]))
+
   (internal-lex port))
 
 
@@ -90,7 +115,8 @@
       [(app id-char-terminator? #t) (complete-id! memo #f)]
       [_ (append-and-continue! memo)]))
 
-  (define lex (lexer [any-char (match-id-char lexeme)]
+  (define lex (lexer ["::" (complete-id! lexeme)]
+                     [any-char (match-id-char lexeme)]
                      [(eof) (complete-id! "")]))
   (lex port))
 

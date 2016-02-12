@@ -16,7 +16,8 @@
 
 (define (add-lexed-token! token)
   ; Note: Technically a token is simply a list, formatted something like:
-  ;   `(Token ((line, col) key value))
+  ;   `(Token ((line col) key value))
+  ;    (second (second `(Token ((line col) key value)))) ; -> key
   (set! internal-lexed-tokens
         (append internal-lexed-tokens `(,token)))
   token)
@@ -35,10 +36,28 @@
   (findf not-space? (reverse (lexed-tokens))))
 
 
+(provide (contract-out [last-non-space-token-is? (-> symbol? boolean?)]))
+
+(define (last-non-space-token-is? key)
+  (equal? (token-type (last-non-space-token)) key))
+
+
+(provide (contract-out [last-non-space-token-eq? (-> string? boolean?)]))
+
+(define (last-non-space-token-eq? value)
+  (equal? (fetch-token-value (last-non-space-token)) value))
+
+
 (provide (contract-out [token-type (-> list? symbol?)]))
 
 (define (token-type token)
   (second (second token)))
+
+
+(provide (contract-out [fetch-token-value (-> list? string?)]))
+
+(define (fetch-token-value token)
+  (third (second token)))
 
 
 ;;
@@ -96,6 +115,7 @@
 (hash-set*! punct-symbols
             "." 'period
             "," 'comma
+            ";" 'semicolon
             "(" 'lparen
             ")" 'rparen
             "{" 'lbrace
@@ -119,7 +139,7 @@
 (provide (contract-out [punct-is-stackable? (-> string? boolean?)]))
 
 (define (punct-is-stackable? punct)
-  (not (or (equal? punct ".") (equal? punct ","))))
+  (not (or (equal? punct ";") (equal? punct ".") (equal? punct ","))))
 
 
 (provide (contract-out [any-punct? (-> boolean?)]))
@@ -140,6 +160,12 @@
   (if (any-punct?)
       (car punct-stack)
       #f))
+
+
+(provide (contract-out [in-array? (-> boolean?)]))
+
+(define (in-array?)
+  (and (any-punct?) (equal? "[" (peek-punct))))
 
 
 (provide (contract-out [pop-punct! (-> (or/c string? boolean?))]))

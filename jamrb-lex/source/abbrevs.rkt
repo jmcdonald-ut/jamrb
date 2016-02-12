@@ -9,7 +9,7 @@
 
 (provide comment newlines space embexpr-end operation id-start int-literal
          float-literal symbeg punct heredoc-beg string-opening embexpr keyword
-         single-keyword)
+         single-keyword unary-op single-unary-op)
 
 ;; Defines the lexer abbreviation for a ruby keyword.  The list of ruby keywords
 ;; can be found at http://ruby-doc.org/core-2.3.0/doc/keywords_rdoc.html
@@ -36,8 +36,11 @@
                                   #\| #\^ "**" ">>" "<<" "&&" "||" ".." "..."
                                   "<=>" "==" "===" "!=" "=~" "!~" "+=" "-="
                                   "*=" "/=" "^=" "%=" "**=" ">=" "<=" "&&="
-                                  "||=" "|=" "<<=" ">>=" "-@" "+@" "~@" "!@"
-                                  "[]" "[]="))
+                                  "||=" "|=" "<<=" ">>=" "[]" "[]=" "::"))
+
+(define-lex-abbrev unary-op (:: single-unary-op (:or whitespace #\( #\newline)))
+
+(define-lex-abbrev single-unary-op (:or "-@" "+@" "~@" "!@"))
 
 (define-lex-abbrev id-start (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\))))
 
@@ -63,7 +66,7 @@
 
 (define-lex-abbrevs
   [float-literal (:or float-pt float-exp)]
-  [float-pt (:or (:: int-part fraction-part) (:: int-part #\.))]
+  [float-pt (:or (:: int-part fraction-part))]
   [float-exp (:: (:or float-pt int-part) exponent)]
 
   [fraction-part (:: #\. int-part)]
@@ -74,7 +77,7 @@
 
 (define-lex-abbrev symbeg (:or #\: (:: #\: #\") (:: #\: #\')))
 
-(define-lex-abbrev punct (:or #\. #\, #\( #\) #\{ #\} #\[ #\]))
+(define-lex-abbrev punct (:or #\. #\, #\; #\( #\) #\{ #\} #\[ #\]))
 
 (define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~))
                                    (:- any-char (:or #\{ #\} #\[ #\] #\<

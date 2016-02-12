@@ -36,6 +36,7 @@
      [int-literal (tok-con line col 'int lexeme)]
      [float-literal (tok-con line col 'float lexeme)]
      [operation (tok-con line col 'op lexeme)]
+     [unary-op (unary-op-lex (rewind (string-length lexeme)) jamrb-lex)]
      [keyword (lex-keyword (rewind (string-length lexeme)) jamrb-lex)]
      [punct (handle-punct! line col lexeme)]
      [string-opening (string-lex port lexeme line col jamrb-lex)]
