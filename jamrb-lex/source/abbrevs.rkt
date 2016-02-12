@@ -9,7 +9,7 @@
 
 (provide comment newlines space embexpr-end operation id-start int-literal
          float-literal symbeg punct heredoc-beg string-opening embexpr keyword
-         single-keyword unary-op single-unary-op)
+         single-keyword unary-op single-unary-op backtick)
 
 ;; Defines the lexer abbreviation for a ruby keyword.  The list of ruby keywords
 ;; can be found at http://ruby-doc.org/core-2.3.0/doc/keywords_rdoc.html
@@ -37,6 +37,8 @@
                                   "<=>" "==" "===" "!=" "=~" "!~" "+=" "-="
                                   "*=" "/=" "^=" "%=" "**=" ">=" "<=" "&&="
                                   "||=" "|=" "<<=" ">>=" "[]" "[]=" "::"))
+
+(define-lex-abbrev backtick "`")
 
 (define-lex-abbrev unary-op (:: single-unary-op (:or whitespace #\( #\newline)))
 

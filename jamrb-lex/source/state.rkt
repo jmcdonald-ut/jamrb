@@ -201,6 +201,12 @@
        (or (not (any-punct?)) (not (equal? (peek-punct) "{")))))
 
 
+(provide (contract-out [backtick? (-> string? boolean?)]))
+
+(define (backtick? punct)
+  (equal? punct "`"))
+
+
 ;;
 ;; Strings
 ;;
@@ -208,9 +214,13 @@
 (provide (contract-out [opening->term (-> string? string?)]))
 
 (define (opening->term opening)
+  (define (handle-backtick-or-q)
+    (if (backtick? opening)
+        opening
+        (punct->close (regexp-replace #rx"\\%[Qq]([{<([])" opening "\\1"))))
   (if (punct-is-open? opening)
       (punct->close opening)
-      (punct->close (regexp-replace #rx"\\%[Qq]([{<([])" opening "\\1"))))
+      (handle-backtick-or-q)))
 
 
 (provide (contract-out [interpolated? (-> string? boolean?)]))

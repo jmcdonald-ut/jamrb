@@ -40,6 +40,7 @@
      [keyword (lex-keyword (rewind (string-length lexeme)) jamrb-lex)]
      [punct (handle-punct! line col lexeme)]
      [string-opening (string-lex port lexeme line col jamrb-lex)]
+     [backtick (handle-backtick lexeme)]
      [symbeg (handle-sym line col lexeme port jamrb-lex)]
      [heredoc-beg (handle-heredoc (rewind (string-length lexeme)) jamrb-lex)]
      [embexpr-end (cons (tokenize line col 'embexpr_end lexeme)
@@ -47,6 +48,11 @@
      [id-start (id-lex (rewind (string-utf-8-length lexeme))
                        (λ (port) (jamrb-lex port embexpr-callback)))]
      [(eof) '()]))
+
+  (define (handle-backtick value)
+    (define (lex-string-and-come-home)
+      (string-lex-no-open port value jamrb-lex))
+    (tokenize-cons line col 'backtick value lex-string-and-come-home))
 
   (define (handle-punct! line col lexeme)
     (if (embexpr-terminator? lexeme)
