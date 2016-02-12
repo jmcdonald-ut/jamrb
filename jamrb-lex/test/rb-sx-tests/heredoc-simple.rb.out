@@ -1,0 +1,4 @@
+((Token ((1 0) on_heredoc_beg "<<SIMPLEHEREDOC"))
+ (Token ((1 15) on_nl "\n"))
+ (Token ((2 0) on_tstring_content "This is about as simple as it gets.\n"))
+ (Token ((3 0) on_heredoc_end "SIMPLEHEREDOC\n")))
