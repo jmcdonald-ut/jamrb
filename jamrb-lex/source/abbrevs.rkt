@@ -102,12 +102,27 @@
 
 
 ;; Heredocs
-(provide heredoc-beg)
+(provide heredoc-beg heredoc-interp heredoc-no-interp
+         heredoc-prefix-indent heredoc-prefix-no-indent)
 
 (define-lex-abbrevs
-  [heredoc-beg (:: hdoc-prefix hdoc-id (:? hdoc-quotes) #\newline)]
-  [hdoc-id (:+ (:- any-char whitespace punct))]
-  [hdoc-prefix (:: "<<" (:? hdoc-indent) (:? hdoc-quotes))]
+  [heredoc-beg (:: hdoc-prefix (:or hdoc-id hdoc-id-quoted))]
+
+  ;; Captures whether the heredoc is interpolated.
+  [heredoc-interp (:: (:or hdoc-id hdoc-id-btick hdoc-id-dbl))]
+  [heredoc-no-interp (:: hdoc-id-single)]
+
+  ;; Captures whether the heredoc is whitespace indifferent for terminator.
+  [heredoc-prefix-indent (:: "<<" hdoc-indent)]
+  [heredoc-prefix-no-indent "<<"]
+
+  [hdoc-id-quoted (:or hdoc-id-single hdoc-id-dbl hdoc-id-btick)]
+  [hdoc-id-single (:: #\' hdoc-id #\')]
+  [hdoc-id-dbl (:: #\" hdoc-id #\")]
+  [hdoc-id-btick (:: #\` hdoc-id #\`)]
+  [hdoc-id (:+ (:- any-char #\< whitespace punct hdoc-quotes))]
+
+  [hdoc-prefix (:: "<<" (:? hdoc-indent))]
   [hdoc-indent (:or "-" "~")]
   [hdoc-quotes (:or #\' #\" #\`)])
 

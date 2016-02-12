@@ -145,6 +145,31 @@
 
 
 ;;
+;; Heredocs
+;;
+
+; NOTE:  This lexer is only for determining state, do not use it to tokenize.
+(define (lex-heredoc-beg heredoc-beg)
+  (define internal-port (open-input-string heredoc-beg))
+
+  (define (set-indented-and-cont! bool)
+    (pretty-write (format "(~a)#indent? -> ~a" heredoc-beg bool))
+    (internal-lex internal-port))
+
+  (define (set-interpolated! bool)
+    (pretty-write (format "(~a)#interp? -> ~a" heredoc-beg bool)))
+
+  (define internal-lex
+    (lexer
+     [heredoc-prefix-indent (set-indented-and-cont! #t)]
+     [heredoc-prefix-no-indent (set-indented-and-cont! #f)]
+     [heredoc-interp (set-interpolated! #t)]
+     [heredoc-no-interp (set-interpolated! #f)]))
+
+  (internal-lex internal-port))
+
+
+;;
 ;; Strings
 ;;
 
