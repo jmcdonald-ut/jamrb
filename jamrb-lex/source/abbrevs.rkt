@@ -7,12 +7,10 @@
 (require parser-tools/lex
          (prefix-in : parser-tools/lex-sre))
 
-(provide comment newlines space embexpr-end operation id-start int-literal
-         float-literal symbeg punct heredoc-beg string-opening embexpr keyword
-         single-keyword unary-op single-unary-op backtick)
 
-;; Defines the lexer abbreviation for a ruby keyword.  The list of ruby keywords
-;; can be found at http://ruby-doc.org/core-2.3.0/doc/keywords_rdoc.html
+;; Ruby Keywords (see: http://ruby-doc.org/core-2.3.0/doc/keywords_rdoc.html)
+(provide keyword single-keyword)
+
 (define-lex-abbrevs
   [keyword (:: single-keyword (:or #\. #\( #\) #\[ #\] whitespace))]
   [single-keyword (:or  "__ENCODING__" "__LINE__" "__FILE__" "BEGIN" "END"
@@ -22,29 +20,43 @@
                         "rescue" "retry" "return" "self" "super" "then" "true"
                         "undef" "unless" "until" "when" "while" "yield")])
 
+
+;; Ruby Comments
+(provide comment)
+
 (define-lex-abbrev comment (:: (:+ "#")
                                (:* (:- any-char #\newline))
                                (:? #\newline)))
 
-(define-lex-abbrev newlines (:+ #\newline))
 
-(define-lex-abbrev space (:+ (:- whitespace #\newline)))
+;; Newlines & Whitespace
+(provide newlines space)
 
-(define-lex-abbrev embexpr-end (:: #\}))
+(define-lex-abbrevs
+  [newlines (:+ #\newline)]
+  [space (:+ (:- whitespace #\newline))])
 
-(define-lex-abbrev operation (:or #\! #\~ #\+ #\- #\* #\/ #\% #\& #\> #\< #\=
-                                  #\| #\^ "**" ">>" "<<" "&&" "||" ".." "..."
-                                  "<=>" "==" "===" "!=" "=~" "!~" "+=" "-="
-                                  "*=" "/=" "^=" "%=" "**=" ">=" "<=" "&&="
-                                  "||=" "|=" "<<=" ">>=" "[]" "[]=" "::"))
 
-(define-lex-abbrev backtick "`")
+;; Operations
+(provide op unary-op single-unary-op)
 
 (define-lex-abbrev unary-op (:: single-unary-op (:or whitespace #\( #\newline)))
-
 (define-lex-abbrev single-unary-op (:or "-@" "+@" "~@" "!@"))
+(define-lex-abbrev op (:or #\! #\~ #\+ #\- #\* #\/ #\% #\& #\> #\< #\=
+                           #\| #\^ "**" ">>" "<<" "&&" "||" ".." "..."
+                           "<=>" "==" "===" "!=" "=~" "!~" "+=" "-="
+                           "*=" "/=" "^=" "%=" "**=" ">=" "<=" "&&="
+                           "||=" "|=" "<<=" ">>=" "[]" "[]=" "::"))
+
+
+;; Identifiers
+(provide id-start)
 
 (define-lex-abbrev id-start (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\))))
+
+
+;; Numbers
+(provide int-literal float-literal)
 
 (define-lex-abbrevs
   [int-literal (:or bin-number oct-number ten-number hex-number)]
@@ -64,9 +76,8 @@
   [dec-prefix (:: #\0 (:or #\d #\D))]
 
   [ten-number (:: (:? (:: #\0 (:or #\d #\D))) (:+ ten-digit))]
-  [ten-digit (:or oct-digit #\9)])
+  [ten-digit (:or oct-digit #\9)]
 
-(define-lex-abbrevs
   [float-literal (:or float-pt float-exp)]
   [float-pt (:or (:: int-part fraction-part))]
   [float-exp (:: (:or float-pt int-part) exponent)]
@@ -77,24 +88,45 @@
 
   [exponent (:: (:or #\e #\E) (:** 0 1 (:or #\+ #\-)) int-part)])
 
+
+;; Symbols
+(provide symbeg)
+
 (define-lex-abbrev symbeg (:or #\: (:: #\: #\") (:: #\: #\')))
 
+
+;; Punctuation
+(provide punct)
+
 (define-lex-abbrev punct (:or #\. #\, #\; #\( #\) #\{ #\} #\[ #\]))
+
+
+;; Heredocs
+(provide heredoc-beg)
 
 (define-lex-abbrev heredoc-beg (:: "<<" (:? (:or #\- #\~))
                                    (:- any-char (:or #\{ #\} #\[ #\] #\<
                                                      #\> #\( #\space #\=))
                                    (:* (:- any-char #\newline))))
 
-;; Defines the lexer abbreviation for a string opening.
-;;
-;; TO-DO: Support %q, %Q.
-(define-lex-abbrev string-opening (:or str-dbl str-single))
 
-;; Defines the individual lexer abbreviations for string.
+;; Strings
+(provide str-beg backtick)
+
+(define-lex-abbrev str-beg (:or str-dbl str-single))
+(define-lex-abbrev backtick "`")
+
+
 (define-lex-abbrevs
   [str-dbl (:or #\" per-dbl)]
   [str-single (:or #\' per-single)]
   [per-dbl (:: "%Q" (:or #\( #\< #\{ #\[))]
-  [per-single (:: "%q" (:or #\( #\< #\{ #\[))]
-  [embexpr (:: #\# #\{)])
+  [per-single (:: "%q" (:or #\( #\< #\{ #\[))])
+
+
+;; Embedded Expressions
+(provide embexpr embexpr-end)
+
+(define-lex-abbrevs
+  [embexpr (:: #\# #\{)]
+  [embexpr-end (:: #\})])
