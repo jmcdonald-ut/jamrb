@@ -72,8 +72,10 @@
     (define-values (line col) (watch-port-position! port))
     (define rewind (prepare-port-rewinder port line col))
     (define (fill-contents port)
-      (define terminator (regexp-replace #rx"<<[-~]?(.*)" heredoc "\\1"))
-      (lex-string port callback terminator #t))
+      (lex-heredoc-beg heredoc)
+      (define terminator
+        (regexp-replace #rx"<<[-~]?['\"`]?([^'\"`]+)['\"`]?" heredoc "\\1"))
+      (lex-string port callback terminator (hdoc-interpolated?) 'heredoc_end))
 
     (define (call-self-with val)
       (λ () (handle-heredoc port callback val)))

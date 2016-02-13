@@ -12,7 +12,7 @@
 (provide keyword single-keyword)
 
 (define-lex-abbrevs
-  [keyword (:: single-keyword (:or #\. #\( #\) #\[ #\] whitespace))]
+  [keyword (:: single-keyword (:or #\. #\( #\) #\[ #\] #\} whitespace))]
   [single-keyword (:or  "__ENCODING__" "__LINE__" "__FILE__" "BEGIN" "END"
                         "alias" "and" "begin" "break" "case" "class" "def"
                         "defined?" "do" "else" "elsif" "end" "ensure" "false"

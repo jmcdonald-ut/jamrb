@@ -283,6 +283,52 @@
 
 
 ;;
+;; Heredocs
+;;
+
+(define hdoc-tracking (make-hash))
+
+(hash-set*! hdoc-tracking
+            'interpolated? #f
+            'indented? #f)
+
+
+(provide
+ (contract-out [reset-hdoc-tracking! (->* () (boolean? boolean?) any/c)]))
+
+(define (reset-hdoc-tracking! [interpolated? #f] [indented? #f])
+  (hash-set*! hdoc-tracking
+              'interpolated? interpolated?
+              'indented? indented?))
+
+
+(provide (contract-out [hdoc-interpolated? (-> boolean?)]))
+
+(define (hdoc-interpolated?)
+  (hash-ref hdoc-tracking 'interpolated?))
+
+
+(provide (contract-out [hdoc-indented? (-> boolean?)]))
+
+(define (hdoc-indented?)
+  (hash-ref hdoc-tracking 'indented?))
+
+
+(provide (contract-out [set-hdoc-interpolated! (->* () (boolean?) boolean?)]))
+
+(define (set-hdoc-interpolated! [interpolated? #f])
+  (hash-set! hdoc-tracking 'interpolated? interpolated?)
+  interpolated?)
+
+
+(provide (contract-out [set-hdoc-indented! (->* () (boolean?) boolean?)]))
+
+(define (set-hdoc-indented! [indented? #f])
+  (hash-set! hdoc-tracking 'indented? indented?)
+  indented?)
+
+
+;;
 ;; Strings
 ;;
 

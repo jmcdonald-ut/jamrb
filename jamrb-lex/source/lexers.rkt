@@ -32,6 +32,7 @@
                         (last-non-space-token-is? 'on_lbrace)
                         (last-non-space-token-is? 'on_lbracket)
                         (last-non-space-token-is? 'on_lparen)
+                        (last-non-space-token-is? 'on_heredoc_end)
                         (last-non-space-token-is? 'on_comma))])
       (reset-method-tracking!)
       (tok-con line col (if ignore? 'ignored_nl 'nl) value)))
@@ -148,23 +149,22 @@
 ;; Heredocs
 ;;
 
+(provide lex-heredoc-beg)
+
 ; NOTE:  This lexer is only for determining state, do not use it to tokenize.
 (define (lex-heredoc-beg heredoc-beg)
   (define internal-port (open-input-string heredoc-beg))
 
   (define (set-indented-and-cont! bool)
-    (pretty-write (format "(~a)#indent? -> ~a" heredoc-beg bool))
+    (set-hdoc-indented! bool)
     (internal-lex internal-port))
-
-  (define (set-interpolated! bool)
-    (pretty-write (format "(~a)#interp? -> ~a" heredoc-beg bool)))
 
   (define internal-lex
     (lexer
      [heredoc-prefix-indent (set-indented-and-cont! #t)]
      [heredoc-prefix-no-indent (set-indented-and-cont! #f)]
-     [heredoc-interp (set-interpolated! #t)]
-     [heredoc-no-interp (set-interpolated! #f)]))
+     [heredoc-interp (set-hdoc-interpolated! #t)]
+     [heredoc-no-interp (set-hdoc-interpolated! #f)]))
 
   (internal-lex internal-port))
 
@@ -190,9 +190,10 @@
 
     (define in (string-append char-string (read-string read-len port)))
     (define matches? (equal? in terminator))
+    (define prefix-valid? (end-newline? (string-contents) (hdoc-indented?)))
     (rewind read-len)
 
-    matches?)
+    (and prefix-valid? matches?))
 
   (define (is-terminator? char-string port)
     (if (equal? char-string terminator)
@@ -207,21 +208,33 @@
 
 (provide lex-string)
 
-(define (lex-string port fn term interp?)
+(define (lex-string port fn term interp? [term-type 'tstring_end])
   (define-values (line col) (watch-port-position! port))
   (maybe-start-string! line col interp?)
   (define-values (contents sline scol) (string-content-values))
   (define-values (is-terminator? char-is-escape?) (prepare-string-lex-fns term))
 
   (define call-self
-    (λ () (lex-string port fn term interp?)))
+    (λ () (lex-string port fn term interp? term-type)))
+
+  (define (term-with-newline)
+    (define next-char (read-char port))
+    (if (equal? next-char #\newline)
+        (string-append term (char->string next-char))
+        (begin (unget port 1) term)))
+
+  (define (get-term)
+    (if (equal? term-type 'heredoc_end)
+        (term-with-newline)
+        term))
 
   (define (handle-embexpr port value)
     (set! value (string-append "\\" value))
     (define (lex-embexpr)
       (fn port continue-string))
+
     (define (continue-string port)
-      (lex-string port fn term interp?))
+      (lex-string port fn term interp? term-type))
 
     (if interp?
         (tokenize-string-contents!
@@ -229,10 +242,12 @@
         (add-string-contents! value call-self)))
 
   (define (complete-string!)
+    (forward port (string-length term))
+    (define full-terminator (get-term))
     (define (call-home)
       (fn port))
     (define (tokenize-terminator)
-      (tokenize-cons line col 'tstring_end term call-home))
+      (tokenize-cons line col term-type full-terminator call-home))
 
     (tokenize-string-contents! tokenize-terminator))
 

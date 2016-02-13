@@ -132,6 +132,50 @@
     (let* ([simple-port (open-input-string "test")]
            [result (prepare-port-rewinder simple-port 1 1)])
 
-      (check-true (procedure? result))))))
+      (check-true (procedure? result))))
+
+   (test-case
+    "+end-newline?+ enforces parameter contract"
+    (let* ([invalid-string-call (λ () (end-newline? 4))]
+           [invalid-call-with-null (λ () (end-newline? null))]
+           [invalid-ignore-spaces-call (λ () (end-newline? "" "yes"))]
+           [valid-call (λ () (end-newline? ""))]
+           [valid-call-with-opt (λ () (end-newline? "" #t))])
+
+      (check-exn exn:fail? invalid-string-call)
+      (check-exn exn:fail? invalid-call-with-null)
+      (check-exn exn:fail? invalid-ignore-spaces-call)
+      (check-not-exn valid-call)
+      (check-not-exn valid-call-with-opt)))
+
+   (test-case
+    "+end-newline?+ returns value indicating whether string end is newline"
+    (let* ([nl-str1 "Simple nl str \n"]
+           [nl-str2 "So many nl...\n This is another \n\n\n\n"]
+           [empty ""]
+           [close "Simple nl str \nn"]
+           [almost "\\n"])
+
+    (check-true (end-newline? nl-str1))
+    (check-true (end-newline? nl-str2))
+    (check-false (end-newline? empty))
+    (check-false (end-newline? close))
+    (check-false (end-newline? almost))))
+
+   (test-case
+    "+end-newline?+ by default respects trailing spaces"
+    (let* ([str-with-spaces "So I'm space terminated \n "]
+           [str-with-tabs "So I'm space terminated \n\t"])
+
+      (check-false (end-newline? str-with-spaces))
+      (check-false (end-newline? str-with-tabs))))
+
+   (test-case
+    "+end-newline?+ will ignore trailing spaces if specifically set"
+    (let* ([str-with-spaces "So I'm space terminated \n "]
+           [str-with-tabs "So I'm space termianted \n\t"])
+
+      (check-true (end-newline? str-with-spaces #t))
+      (check-true (end-newline? str-with-tabs #t))))))
 
 (run-tests utility-tests)

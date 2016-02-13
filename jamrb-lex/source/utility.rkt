@@ -79,6 +79,13 @@
   port)
 
 
+(provide (contract-out [forward (->* (port?) (exact-positive-integer?) port?)]))
+
+(define (forward port [count 1])
+  (read-string (- count 1) port)
+  port)
+
+
 (provide
  (contract-out
   [unget-with-position! (->* (port? exact-integer? exact-integer?)
@@ -120,3 +127,18 @@
 
 (define (string->char str)
   (car (string->list str)))
+
+
+;;
+;; String/Heredoc Utilities
+;;
+
+(provide (contract-out [end-newline? (->* (string?) (boolean?) boolean?)]))
+
+(define (end-newline? str [ignore-spaces? #f])
+  (define sanitized-str (if ignore-spaces? (string-trim str #px"[ \t]*") str))
+  (define (last-char-nl?)
+    (eq? (car (reverse (string->list sanitized-str))) #\newline))
+
+  (define not-empty? (> (string-length sanitized-str) 0))
+  (and not-empty? (last-char-nl?)))
