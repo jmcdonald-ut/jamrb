@@ -152,3 +152,9 @@
 
   (define arr (string-split str "\n"))
   (if (or (eq? (length arr) 1) (eq? (length arr) 0) (end-nl?)) "" (last arr)))
+
+
+(provide (contract-out [escape-embed (-> string? string?)]))
+
+(define (escape-embed str)
+  (regexp-replace* #rx"(#{)" str "\\\\#{"))

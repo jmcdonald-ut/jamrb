@@ -206,6 +206,28 @@
       (check-equal? (string->nl-tail simple) "")
       (check-equal? (string->nl-tail simple-with-spaces) "   ")
       (check-equal? (string->nl-tail tricky) "...")
-      (check-equal? (string->nl-tail twoline) "")))))
+      (check-equal? (string->nl-tail twoline) "")))
+
+   (test-case
+    "+escape-embed+ enforces parameter contract"
+    (let* ([invalid-call (λ () (escape-embed 'symbol))]
+           [invalid-call-with-null (λ () (escape-embed null))]
+           [valid-call (λ () (escape-embed ""))])
+
+      (check-exn exn:fail? invalid-call)
+      (check-exn exn:fail? invalid-call-with-null)
+      (check-not-exn valid-call)))
+
+   (test-case
+    "+escape-embed+ returns a string with ruby embed opener escaped"
+    (let* ([simple "#{}"]
+           [different "#{ should still escape"]
+           [empty ""]
+           [many "#{} #{} #{}"])
+
+      (check-equal? (escape-embed simple) "\\#{}")
+      (check-equal? (escape-embed different) "\\#{ should still escape")
+      (check-equal? (escape-embed empty) "")
+      (check-equal? (escape-embed many) "\\#{} \\#{} \\#{}")))))
 
 (run-tests utility-tests)

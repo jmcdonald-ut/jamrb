@@ -36,7 +36,7 @@
   ; Define our lexer.
   (define lex
     (lexer
-     [comment (tok-con line col 'comment lexeme)]
+     [comment (tok-con line col 'comment (escape-embed lexeme))]
      [newlines (newline-lex (rewind (string-length lexeme)) call-self)]
      [space (tok-con line col 'sp lexeme)]
      [int-literal (tok-con line col 'int lexeme)]
