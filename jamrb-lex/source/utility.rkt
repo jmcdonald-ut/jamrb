@@ -147,5 +147,8 @@
 (provide (contract-out [string->nl-tail (-> string? string?)]))
 
 (define (string->nl-tail str)
+  (define (end-nl?)
+    (and (> (string-length str) 0) (eq? (last (string->list str)) #\newline)))
+
   (define arr (string-split str "\n"))
-  (if (or (eq? (length arr) 1) (eq? (length arr) 0)) "" (last arr)))
+  (if (or (eq? (length arr) 1) (eq? (length arr) 0) (end-nl?)) "" (last arr)))

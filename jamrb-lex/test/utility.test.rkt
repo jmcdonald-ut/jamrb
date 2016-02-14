@@ -200,10 +200,12 @@
     "+string->nl-tail+ returns all characters following the last newline"
     (let* ([simple "this is a simple string\n"]
            [simple-with-spaces "this is a simple string\n   "]
-           [tricky "this is a less simple\n string...\n ... \n..."])
+           [tricky "this is a less simple\n string...\n ... \n..."]
+           [twoline "This left flush\n  that tab get captured\n"])
 
       (check-equal? (string->nl-tail simple) "")
       (check-equal? (string->nl-tail simple-with-spaces) "   ")
-      (check-equal? (string->nl-tail tricky) "...")))))
+      (check-equal? (string->nl-tail tricky) "...")
+      (check-equal? (string->nl-tail twoline) "")))))
 
 (run-tests utility-tests)

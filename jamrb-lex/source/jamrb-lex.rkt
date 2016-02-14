@@ -27,26 +27,31 @@
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
 
+  (define (call-self port [embexpr-callback embexpr-callback])
+    (jamrb-lex port embexpr-callback))
+
+  (define (call-self-without-port)
+    (jamrb-lex port embexpr-callback))
+
   ; Define our lexer.
   (define lex
     (lexer
      [comment (tok-con line col 'comment lexeme)]
-     [newlines (newline-lex (rewind (string-length lexeme)) jamrb-lex)]
+     [newlines (newline-lex (rewind (string-length lexeme)) call-self)]
      [space (tok-con line col 'sp lexeme)]
      [int-literal (tok-con line col 'int lexeme)]
      [float-literal (tok-con line col 'float lexeme)]
      [op (tok-con line col 'op lexeme)]
-     [unary-op (unary-op-lex (rewind (string-length lexeme)) jamrb-lex)]
-     [keyword (lex-keyword (rewind (string-length lexeme)) jamrb-lex)]
+     [unary-op (unary-op-lex (rewind (string-length lexeme)) call-self)]
+     [keyword (lex-keyword (rewind (string-length lexeme)) call-self)]
      [punct (handle-punct! line col lexeme)]
-     [str-beg (string-lex port lexeme line col jamrb-lex)]
+     [str-beg (string-lex port lexeme line col call-self)]
      [backtick (handle-backtick lexeme)]
-     [symbeg (handle-sym line col lexeme port jamrb-lex)]
-     [heredoc-beg (handle-heredoc (rewind (string-length lexeme)) jamrb-lex)]
+     [symbeg (handle-sym line col lexeme port call-self)]
+     [heredoc-beg (handle-heredoc (rewind (string-length lexeme)) call-self)]
      [embexpr-end (cons (tokenize line col 'embexpr_end lexeme)
                         (embexpr-callback port))]
-     [id-start (id-lex (rewind (string-utf-8-length lexeme))
-                       (λ (port) (jamrb-lex port embexpr-callback)))]
+     [id-start (id-lex (rewind (string-utf-8-length lexeme)) call-self)]
      [(eof) '()]))
 
   (define (handle-backtick value)

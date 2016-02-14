@@ -180,7 +180,7 @@
    [(eof) '()]))
 
 
-(define (prepare-string-lex-fns terminator)
+(define (prepare-string-lex-fns terminator heredoc?)
   (define (is-full-terminator? char-string port)
     (define-values (line col) (watch-port-position! port))
     (define rewind (prepare-port-rewinder port line col))
@@ -196,7 +196,7 @@
     (and prefix-valid? matches?))
 
   (define (is-terminator? char-string port)
-    (if (equal? char-string terminator)
+    (if (and (not heredoc?) (equal? char-string terminator))
         #t
         (if (equal? char-string (char->string (string-ref terminator 0)))
             (is-full-terminator? char-string port)
@@ -212,7 +212,8 @@
   (define-values (line col) (watch-port-position! port))
   (maybe-start-string! line col interp?)
   (define-values (contents sline scol) (string-content-values))
-  (define-values (is-terminator? char-is-escape?) (prepare-string-lex-fns term))
+  (define-values (is-terminator? char-is-escape?)
+    (prepare-string-lex-fns term (eq? term-type 'heredoc_end)))
 
   (define call-self
     (λ () (lex-string port fn term interp? term-type)))
