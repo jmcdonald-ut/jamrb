@@ -61,7 +61,7 @@
     (lexer
      [ripper-token
       (begin
-        (unget port (string-length lexeme))
+        (unget port (string-utf-8-length lexeme))
         (let ([token (token-lexer port)])
           (cons `(Token ,token) (inner-lexer port))))]
 

@@ -219,9 +219,12 @@
 
   (define (term-with-newline)
     (define next-char (read-char port))
+    (define (rewind-unless-eof)
+      (unless (eof-object? next-char) (unget port 1))
+      #t)
     (if (equal? next-char #\newline)
         (string-append term (char->string next-char))
-        (begin (unget port 1) term)))
+        (and (rewind-unless-eof) term)))
 
   (define (get-term)
     (if (equal? term-type 'heredoc_end)
@@ -242,12 +245,23 @@
         (add-string-contents! value call-self)))
 
   (define (complete-string!)
-    (forward port (string-length term))
+    (forward port (- (string-length term) 1))
     (define full-terminator (get-term))
     (define (call-home)
       (fn port))
     (define (tokenize-terminator)
-      (tokenize-cons line col term-type full-terminator call-home))
+      (define normal-col (if (eq? term-type 'heredoc_end) 0 col))
+      (tokenize-cons line normal-col term-type full-terminator call-home))
+
+    (define chop? (and (eq? term-type 'heredoc_end) (hdoc-indented?)))
+    (define (adjust-terminator)
+      (let* ([prefix (string->nl-tail (string-contents))]
+             [chop-amt (string-length prefix)]
+             [new-terminator (string-append prefix full-terminator)])
+        (chop-string-contents! chop-amt)
+        (set! full-terminator new-terminator)))
+
+    (cond [chop? (adjust-terminator)])
 
     (tokenize-string-contents! tokenize-terminator))
 

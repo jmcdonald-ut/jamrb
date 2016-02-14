@@ -79,10 +79,10 @@
   port)
 
 
-(provide (contract-out [forward (->* (port?) (exact-positive-integer?) port?)]))
+(provide (contract-out [forward (->* (port?) (exact-integer?) port?)]))
 
 (define (forward port [count 1])
-  (read-string (- count 1) port)
+  (read-string count port)
   port)
 
 
@@ -142,3 +142,10 @@
 
   (define not-empty? (> (string-length sanitized-str) 0))
   (and not-empty? (last-char-nl?)))
+
+
+(provide (contract-out [string->nl-tail (-> string? string?)]))
+
+(define (string->nl-tail str)
+  (define arr (string-split str "\n"))
+  (if (or (eq? (length arr) 1) (eq? (length arr) 0)) "" (last arr)))

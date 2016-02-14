@@ -176,6 +176,34 @@
            [str-with-tabs "So I'm space termianted \n\t"])
 
       (check-true (end-newline? str-with-spaces #t))
-      (check-true (end-newline? str-with-tabs #t))))))
+      (check-true (end-newline? str-with-tabs #t))))
+
+   (test-case
+    "+string->nl-tail+ enforces parameter contract"
+    (let* ([invalid-str-call (λ () (string->nl-tail #f))]
+           [invalid-call-with-null (λ () (string->nl-tail null))]
+           [valid-call (λ () (string->nl-tail ""))])
+
+      (check-exn exn:fail? invalid-str-call)
+      (check-exn exn:fail? invalid-call-with-null)
+      (check-not-exn valid-call)))
+
+   (test-case
+    "+string->nl-tail+ returns empty string if no newline"
+    (let* ([empty ""]
+           [simple "this is a simple string."])
+
+      (check-equal? (string->nl-tail empty) "")
+      (check-equal? (string->nl-tail simple) "")))
+
+   (test-case
+    "+string->nl-tail+ returns all characters following the last newline"
+    (let* ([simple "this is a simple string\n"]
+           [simple-with-spaces "this is a simple string\n   "]
+           [tricky "this is a less simple\n string...\n ... \n..."])
+
+      (check-equal? (string->nl-tail simple) "")
+      (check-equal? (string->nl-tail simple-with-spaces) "   ")
+      (check-equal? (string->nl-tail tricky) "...")))))
 
 (run-tests utility-tests)

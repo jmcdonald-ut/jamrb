@@ -387,6 +387,14 @@
   (callback))
 
 
+(provide (contract-out [chop-string-contents! (-> exact-integer? string?)]))
+
+(define (chop-string-contents! amt)
+  (define keep-until (- (string-length (string-contents)) amt))
+  (set! active-contents (substring active-contents 0 keep-until))
+  (string-contents))
+
+
 (provide (contract-out (string-interpolated? (-> boolean?))))
 
 (define (string-interpolated?)
