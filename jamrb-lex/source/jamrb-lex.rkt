@@ -100,8 +100,8 @@
           (jamrb-lex port embexpr-callback)))
 
   ; Return the result of lexically analyzing the given port.
-  (with-handlers ([exn:fail? (λ (e) (fail-for-invalid-syntax line col))])
-    (lex port)))
+  ;(with-handlers ([exn:fail? (λ (e) (fail-for-invalid-syntax line col))])
+    (lex port))
 
 ;; (number, number) -> string
 ;;

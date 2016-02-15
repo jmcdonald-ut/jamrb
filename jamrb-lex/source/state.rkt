@@ -6,6 +6,53 @@
 #lang racket
 
 ;;
+;; Port Line/Column Watching
+;;
+
+(define port-state (make-hash))
+
+(hash-set*! port-state
+            'line 1
+            'next-col 0
+            'next-utf-8-col 0)
+
+
+(provide (contract-out [next-utf-8-col (-> exact-integer? exact-integer?)]))
+
+(define (next-utf-8-col line)
+  (if (eq? line (current-line))
+      (hash-ref port-state 'next-utf-8-col)
+      0))
+
+
+(define (current-line)
+  (hash-ref port-state 'line))
+
+
+(provide (contract-out [increment-columns! (-> list? any/c)]))
+
+(define (increment-columns! token)
+  (let* ([len (string-length (token->value token))]
+         [utf8-len (string-utf-8-length (token->value token))]
+         [next (hash-ref port-state 'next-col)]
+         [next-utf (hash-ref port-state 'next-utf-8-col)])
+    (hash-set*! port-state
+                'next-col (+ next len)
+                'next-utf-8-col (+ next-utf utf8-len))))
+
+
+(provide (contract-out [update-port-state! (-> list? any/c)]))
+
+(define (update-port-state! token)
+  (if (eq? (current-line) (token->line token))
+      (increment-columns! token)
+      (hash-set*! port-state
+                  'line (token->line token)
+                  'next-col (string-length (token->value token))
+                  'next-utf-8-col (string-utf-8-length (token->value token)))))
+
+
+;;
 ;; Tokens
 ;;
 
@@ -15,6 +62,7 @@
 (provide (contract-out [add-lexed-token! (-> list? list?)]))
 
 (define (add-lexed-token! token)
+  (update-port-state! token)
   ; Note: Technically a token is simply a list, formatted something like:
   ;   `(Token ((line col) key value))
   ;    (second (second `(Token ((line col) key value)))) ; -> key
@@ -60,6 +108,32 @@
 
 (define (fetch-token-value token)
   (third (second token)))
+
+
+(provide (contract-out [token->line (-> list? exact-integer?)]))
+
+(define (token->line token)
+  (first (first (second token))))
+
+
+(provide (contract-out [token->col (-> list? exact-integer?)]))
+
+(define (token->col token)
+  (second (first (second token))))
+
+
+(provide (contract-out [token->value (-> list? string?)]))
+
+(define (token->value token [denormalized? #t])
+  (if denormalized?
+      (value->denormalized (third (second token)))
+      (third (second token))))
+
+
+(provide (contract-out [value->denormalized (-> string? string?)]))
+
+(define (value->denormalized value)
+  (regexp-replace* "\\\\#{" value "#{"))
 
 
 ;;
