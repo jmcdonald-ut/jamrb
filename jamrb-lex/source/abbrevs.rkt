@@ -127,6 +127,16 @@
   [hdoc-quotes (:or #\' #\" #\`)])
 
 
+;; Regex
+(provide rx-style rx-mark-end rx-mark)
+
+(define-lex-abbrevs
+  [rx-style (:: rx-mark (:* any-char) rx-mark-end)]
+  [rx-mark-end (:: rx-mark (:* rx-delimiter))]
+  [rx-mark #\/]
+  [rx-delimiter (:or #\i #\m #\x #\o #\u #\e #\s #\n)])
+
+
 ;; Strings
 (provide str-beg backtick)
 

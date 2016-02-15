@@ -106,7 +106,8 @@
 
 (define (watch-port-position! port)
   (port-count-lines! port)
-  (let-values ([(line col _) (port-next-location port)])
+  (let-values ([(line col total) (port-next-location port)])
+    (pretty-write (format "Total read: ~a" total))
     (values line col)))
 
 

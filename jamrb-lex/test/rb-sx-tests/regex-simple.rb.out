@@ -20,7 +20,7 @@
  (Token ((2 17) on_nl "\n"))
  (Token ((3 0) on_ignored_nl "\n"))
  (Token ((4 0) on_regexp_beg "/"))
- (Token ((4 1) on_tstring_content "\\\\s\\\\u{6771 4eac 90fd}"))
+ (Token ((4 1) on_tstring_content "\\s\\u{6771 4eac 90fd}"))
  (Token ((4 21) on_regexp_end "/"))
  (Token ((4 22) on_period "."))
  (Token ((4 23) on_ident "match"))

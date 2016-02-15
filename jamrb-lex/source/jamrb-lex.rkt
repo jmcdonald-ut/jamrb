@@ -41,6 +41,7 @@
      [space (tok-con line col 'sp lexeme)]
      [int-literal (tok-con line col 'int lexeme)]
      [float-literal (tok-con line col 'float lexeme)]
+     [rx-style (lex-regex (rewind (string-utf-8-length lexeme)) call-self)]
      [op (tok-con line col 'op lexeme)]
      [unary-op (unary-op-lex (rewind (string-length lexeme)) call-self)]
      [keyword (lex-keyword (rewind (string-length lexeme)) call-self)]

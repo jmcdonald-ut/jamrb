@@ -170,6 +170,34 @@
 
 
 ;;
+;; Regex
+;;
+
+(provide lex-regex)
+
+(define (lex-regex port callback [ending? #f])
+  (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
+
+  (define (call-self [port port])
+    (lex-regex port callback #t))
+
+  (define internal-lex
+    (lexer
+     [rx-mark-end (handle-rx-mark lexeme)]
+     [rx-mark (handle-rx-mark lexeme)]
+     [any-char (lex-string (rewind) call-self "/" #f 'regexp_end)]
+     [(eof) '()]))
+
+  (define (handle-rx-mark val)
+    (if (or (last-non-space-token-is? 'on_regexp_beg) ending?)
+        (tokenize-cons line col 'regexp_end val (λ () (callback port)))
+        (tokenize-cons line col 'regexp_beg val call-self)))
+
+  (internal-lex port))
+
+
+;;
 ;; Strings
 ;;
 
@@ -210,6 +238,7 @@
 
 (define (lex-string port fn term interp? [term-type 'tstring_end])
   (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
   (maybe-start-string! line col interp?)
   (define-values (contents sline scol) (string-content-values))
   (define-values (is-terminator? char-is-escape?)
@@ -264,13 +293,18 @@
 
     (cond [chop? (adjust-terminator)])
 
-    (tokenize-string-contents! tokenize-terminator))
+    (if (eq? term-type 'regexp_end)
+        (begin (rewind) (tokenize-string-contents! call-home))
+        (tokenize-string-contents! tokenize-terminator)))
 
-  (define (handle-escape) (void))
+  (define (handle-escape input)
+    (define new-val (string-append input (char->string (read-char port))))
+    (add-string-contents! new-val call-self))
+
   (define (handle-char value)
     (match value
       [(app (λ (val) (is-terminator? val port)) #t) (complete-string!)]
-      [(app char-is-escape? #t) (handle-escape)]
+      [(app char-is-escape? #t) (handle-escape value)]
       [_ (add-string-contents! value call-self)]))
 
   (define internal-lex (prepare-lexer port handle-char handle-embexpr))

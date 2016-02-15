@@ -39,13 +39,15 @@
 (provide (contract-out [last-non-space-token-is? (-> symbol? boolean?)]))
 
 (define (last-non-space-token-is? key)
-  (equal? (token-type (last-non-space-token)) key))
+  (and (not (empty? (lexed-tokens)))
+       (equal? (token-type (last-non-space-token)) key)))
 
 
 (provide (contract-out [last-non-space-token-eq? (-> string? boolean?)]))
 
 (define (last-non-space-token-eq? value)
-  (equal? (fetch-token-value (last-non-space-token)) value))
+  (and (not (empty? (lexed-tokens)))
+       (equal? (fetch-token-value (last-non-space-token)) value)))
 
 
 (provide (contract-out [token-type (-> list? symbol?)]))
