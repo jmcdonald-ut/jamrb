@@ -33,7 +33,12 @@
                         (last-non-space-token-is? 'on_lbracket)
                         (last-non-space-token-is? 'on_lparen)
                         (last-non-space-token-is? 'on_heredoc_end)
-                        (last-non-space-token-is? 'on_comma))])
+                        (last-non-space-token-is? 'on_comma)
+                        (last-non-space-token-is? 'on_comment)
+                        (and (last-non-space-token-is? 'on_kw)
+                             (or (last-non-space-token-eq? "else")
+                                 (last-non-space-token-eq? "ensure")
+                                 (last-non-space-token-eq? "begin"))))])
       (reset-method-tracking!)
       (tok-con line col (if ignore? 'ignored_nl 'nl) value)))
 
