@@ -43,6 +43,9 @@
      [float-literal (tok-con line col 'float lexeme)]
      [rx-style (lex-regex (rewind (string-utf-8-length lexeme)) call-self)]
      [op (tok-con line col 'op lexeme)]
+     [def-op (def-op-lex (rewind (string-utf-8-length lexeme)) call-self)]
+     [id-op-seq (id-op-lex (rewind (string-utf-8-length lexeme)) call-self)]
+     [spaced-op (spaced-op-lex (rewind (string-utf-8-length lexeme)) call-self)]
      [unary-op (unary-op-lex (rewind (string-length lexeme)) call-self)]
      [keyword (lex-keyword (rewind (string-length lexeme)) call-self)]
      [punct (handle-punct! line col lexeme)]
@@ -100,8 +103,8 @@
           (jamrb-lex port embexpr-callback)))
 
   ; Return the result of lexically analyzing the given port.
-  ;(with-handlers ([exn:fail? (λ (e) (fail-for-invalid-syntax line col))])
-    (lex port))
+  (with-handlers ([exn:fail? (λ (e) (fail-for-invalid-syntax line col))])
+    (lex port)))
 
 ;; (number, number) -> string
 ;;

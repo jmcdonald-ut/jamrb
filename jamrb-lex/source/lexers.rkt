@@ -35,6 +35,7 @@
                         (last-non-space-token-is? 'on_heredoc_end)
                         (last-non-space-token-is? 'on_comma)
                         (last-non-space-token-is? 'on_comment)
+                        (not (any-non-space-tokens?))
                         (and (last-non-space-token-is? 'on_kw)
                              (or (last-non-space-token-eq? "else")
                                  (last-non-space-token-eq? "ensure")
@@ -64,6 +65,58 @@
     (lexer
      [single-unary-op (tokenize-cons line col 'op lexeme
                                      (λ () (callback port)))]))
+
+  (internal-lex port))
+
+
+(provide spaced-op-lex)
+
+(define (spaced-op-lex port callback)
+  (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
+
+  (define (call-self [port port])
+    (spaced-op-lex port callback))
+
+  (define internal-lex
+    (lexer
+     [space (tokenize-cons line col 'sp lexeme call-self)]
+     [newlines (newline-lex (rewind (string-length lexeme)) call-self)]
+     [spaced-op-char (tokenize-cons line col 'op lexeme call-self)]
+     [any-char (callback (rewind (string-utf-8-length lexeme)))]))
+
+  (internal-lex port))
+
+
+(provide id-op-lex)
+(define (id-op-lex port callback)
+  (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
+
+  (define (call-self [port port])
+    (id-op-lex port callback))
+
+  (define internal-lex
+    (lexer
+     [id-start (id-lex (rewind (string-utf-8-length lexeme)) call-self)]
+     [id-op (tokenize-cons line col 'op lexeme (λ () (callback port)))]))
+
+  (internal-lex port))
+
+
+(provide def-op-lex)
+(define (def-op-lex port callback)
+  (define-values (line col) (watch-port-position! port))
+  (define rewind (prepare-port-rewinder port line col))
+
+  (define (call-self [port port])
+    (def-op-lex port callback))
+
+  (define internal-lex
+    (lexer
+     [keyword (lex-keyword (rewind (string-utf-8-length lexeme)) call-self)]
+     [space (tokenize-cons line col 'sp lexeme call-self)]
+     [id-op (tokenize-cons line col 'op lexeme (λ () (callback port)))]))
 
   (internal-lex port))
 
@@ -137,15 +190,24 @@
   (define-values (line col) (watch-port-position! port))
   (define rewind (prepare-port-rewinder port line col))
 
+  (define (call-self [port port])
+    (lex-keyword port callback))
+
   (define internal-lex
     (lexer
+     [punct (cons (tokenize-punct! line col lexeme) (call-self))]
      [single-keyword (handle-keyword lexeme)]
      [any-char (callback (rewind (string-length lexeme)))]
      [(eof) '()]))
 
   (define (handle-keyword value)
-    (track-def! (equal? value "def"))
-    (tokenize-cons line col 'kw value (λ () (lex-keyword port callback))))
+    (define (invoke-callback)
+      (callback port))
+    (if (last-non-space-token-is? 'on_period)
+        (tokenize-cons line col 'ident value invoke-callback)
+        (begin
+          (track-def! (or (equal? value "def") (def-tracked?)))
+          (tokenize-cons line col 'kw value invoke-callback))))
 
   (internal-lex port))
 

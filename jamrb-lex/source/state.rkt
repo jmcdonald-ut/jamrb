@@ -98,6 +98,12 @@
        (equal? (fetch-token-value (last-non-space-token)) value)))
 
 
+(provide (contract-out [any-non-space-tokens? (-> boolean?)]))
+
+(define (any-non-space-tokens?)
+  (not (not (last-non-space-token))))
+
+
 (provide (contract-out [token-type (-> list? symbol?)]))
 
 (define (token-type token)

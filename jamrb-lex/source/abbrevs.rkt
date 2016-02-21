@@ -12,7 +12,7 @@
 (provide keyword single-keyword)
 
 (define-lex-abbrevs
-  [keyword (:: single-keyword (:or #\. #\( #\) #\[ #\] #\} whitespace))]
+  [keyword (:: (:* punct) single-keyword (:+ (:or punct whitespace)))]
   [single-keyword (:or  "__ENCODING__" "__LINE__" "__FILE__" "BEGIN" "END"
                         "alias" "and" "begin" "break" "case" "class" "def"
                         "defined?" "do" "else" "elsif" "end" "ensure" "false"
@@ -38,7 +38,19 @@
 
 
 ;; Operations
-(provide op unary-op single-unary-op)
+(provide op unary-op single-unary-op spaced-op
+         spaced-op-char id-op-seq id-op def-op)
+
+(define-lex-abbrevs
+  [spaced-op (:: (:+ whitespace) spaced-op-char (:+ whitespace))]
+  [spaced-op-char (:or #\? #\:)]
+
+  [id-op-seq (:: (:- id-start whitespace op)
+                 (:* (:- any-char whitespace op id-op))
+                 id-op)]
+  [id-op "[]"]
+
+  [def-op (:: "def" space id-op (:* space) (:or #\( (:+ whitespace)))])
 
 (define-lex-abbrev unary-op (:: single-unary-op (:or whitespace #\( #\newline)))
 (define-lex-abbrev single-unary-op (:or "-@" "+@" "~@" "!@"))
@@ -46,13 +58,13 @@
                            #\| #\^ "**" ">>" "<<" "&&" "||" ".." "..."
                            "<=>" "==" "===" "!=" "=~" "!~" "+=" "-="
                            "*=" "/=" "^=" "%=" "**=" ">=" "<=" "&&="
-                           "||=" "|=" "<<=" ">>=" "[]" "[]=" "::"))
+                           "||=" "|=" "<<=" ">>=" "[]=" "::"))
 
 
 ;; Identifiers
 (provide id-start)
 
-(define-lex-abbrev id-start (:- any-char (:or #\{ #\} #\[ #\] #\< #\> #\( #\))))
+(define-lex-abbrev id-start (:- any-char #\{ #\} #\[ #\] #\< #\> #\( #\)))
 
 
 ;; Numbers
