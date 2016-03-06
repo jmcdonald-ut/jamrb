@@ -36,10 +36,16 @@
                         (last-non-space-token-is? 'on_comma)
                         (last-non-space-token-is? 'on_comment)
                         (not (any-non-space-tokens?))
+                        (and (last-non-space-token-is? 'on_op)
+                             (or (last-non-space-token-eq? "+")
+                                 (last-non-space-token-eq? "-")
+                                 (last-non-space-token-eq? "/")
+                                 (last-non-space-token-eq? "*")))
                         (and (last-non-space-token-is? 'on_kw)
                              (or (last-non-space-token-eq? "else")
                                  (last-non-space-token-eq? "ensure")
-                                 (last-non-space-token-eq? "begin"))))])
+                                 (last-non-space-token-eq? "begin")
+                                 (last-non-space-token-eq? "case"))))])
       (reset-method-tracking!)
       (tok-con line col (if ignore? 'ignored_nl 'nl) value)))
 
@@ -262,6 +268,20 @@
         (tokenize-cons line col 'regexp_beg val call-self)))
 
   (internal-lex port))
+
+
+;;
+;; Percent Strings
+;;
+
+(provide percent-words-open percent-words)
+
+(define (percent-words port callback)
+  (void))
+
+
+(define (percent-words-open port callback)
+  (void))
 
 
 ;;

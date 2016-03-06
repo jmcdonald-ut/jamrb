@@ -161,6 +161,7 @@
   (match (string-ref value 0)
     [(app char-upper-case? #t) 'const]
     [(app (λ (val) (equal? #\@ val)) #t) 'ivar]
+    [(app (λ (val) (equal? #\$ val)) #t) 'gvar]
     [(app (λ (val) (string-suffix? value ":")) #t) 'label]
     [_ 'ident]))
 
@@ -169,7 +170,9 @@
 
 (define (id-char-invalid? value [first? #f])
   (or (and (char>? value (integer->char 0)) (char<? value #\!))
-      (and (char>? value #\!) (char<? value #\0))
+      (and (char>? value #\!) (char<? value #\$))
+      (and (not first?) (eq? value #\$))
+      (and (char>? value #\$) (char<? value #\0))
       (and (char>? value #\9) (char<? value #\:))
       (and (char>? value #\:) (char<? value #\?))
       (and (not first?) (eq? value #\@))

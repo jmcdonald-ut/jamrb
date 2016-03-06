@@ -1,0 +1,4 @@
+((Token ((1 0) on_symbeg "%s("))
+ (Token ((1 3) on_tstring_content "complex symbol"))
+ (Token ((1 17) on_tstring_end ")"))
+ (Token ((1 18) on_nl "\n")))

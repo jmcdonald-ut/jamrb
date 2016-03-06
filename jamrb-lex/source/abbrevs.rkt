@@ -58,7 +58,7 @@
                            #\| #\^ "**" ">>" "<<" "&&" "||" ".." "..."
                            "<=>" "==" "===" "!=" "=~" "!~" "+=" "-="
                            "*=" "/=" "^=" "%=" "**=" ">=" "<=" "&&="
-                           "||=" "|=" "<<=" ">>=" "[]=" "::"))
+                           "||=" "|=" "<<=" ">>=" "[]=" "::" "=>"))
 
 
 ;; Identifiers
@@ -161,6 +161,14 @@
   [str-single (:or #\' per-single)]
   [per-dbl (:: "%Q" (:or #\( #\< #\{ #\[))]
   [per-single (:: "%q" (:or #\( #\< #\{ #\[))])
+
+
+;; Percent Strings (Not Covered by Others)
+(provide pct-qwords)
+
+(define-lex-abbrevs
+  [pct-qwords (:: (:or "%w" "%W") pct-char-open)]
+  [pct-char-open (:or #\( #\< #\{ #\[)])
 
 
 ;; Embedded Expressions

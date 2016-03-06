@@ -55,6 +55,7 @@
      [heredoc-beg (handle-heredoc (rewind (string-length lexeme)) call-self)]
      [embexpr-end (cons (tokenize line col 'embexpr_end lexeme)
                         (embexpr-callback port))]
+     [pct-qwords (handle-qwords lexeme)]
      [id-start (id-lex (rewind (string-utf-8-length lexeme)) call-self)]
      [(eof) '()]))
 
@@ -69,6 +70,13 @@
               (embexpr-callback port))
         (cons (tokenize-punct! line col lexeme)
               (jamrb-lex port embexpr-callback))))
+
+  (define (handle-qwords value)
+    (define (lex-string-and-come-home)
+      (let* ([opening (regexp-replace #rx"\\%[Ww]([{<([])" value "\\1")]
+             [closing (punct->close opening)])
+        (lex-string port call-self closing (string-prefix? value "%W"))))
+    (tokenize-cons line col 'qwords_beg value lex-string-and-come-home))
 
   (define (handle-sym line col value port callback)
     (define token (tokenize line col 'symbeg value))
